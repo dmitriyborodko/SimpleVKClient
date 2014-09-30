@@ -7,9 +7,11 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "VKSdk.h"
 
-@interface ViewController : UIViewController
+@interface LoginController : UIViewController <VKSdkDelegate>
 
+- (IBAction)loginButton:(id)sender;
 
 @end
 

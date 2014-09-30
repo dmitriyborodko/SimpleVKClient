@@ -7,14 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4D5384B92271497AA3EED2DA /* libPods-Simple_VK_Client.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A57473B154054BA880FF59C3 /* libPods-Simple_VK_Client.a */; settings = {ATTRIBUTES = (Required, ); }; };
 		64F7C2D619D940F000EC6FB9 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 64F7C2D519D940F000EC6FB9 /* main.m */; };
 		64F7C2D919D940F000EC6FB9 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 64F7C2D819D940F000EC6FB9 /* AppDelegate.m */; };
 		64F7C2DC19D940F000EC6FB9 /* Simple_VK_Client.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 64F7C2DA19D940F000EC6FB9 /* Simple_VK_Client.xcdatamodeld */; };
-		64F7C2DF19D940F000EC6FB9 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 64F7C2DE19D940F000EC6FB9 /* ViewController.m */; };
+		64F7C2DF19D940F000EC6FB9 /* LoginController.m in Sources */ = {isa = PBXBuildFile; fileRef = 64F7C2DE19D940F000EC6FB9 /* LoginController.m */; };
 		64F7C2E219D940F000EC6FB9 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 64F7C2E019D940F000EC6FB9 /* Main.storyboard */; };
 		64F7C2E419D940F000EC6FB9 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 64F7C2E319D940F000EC6FB9 /* Images.xcassets */; };
 		64F7C2E719D940F000EC6FB9 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 64F7C2E519D940F000EC6FB9 /* LaunchScreen.xib */; };
 		64F7C2F319D940F000EC6FB9 /* Simple_VK_ClientTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 64F7C2F219D940F000EC6FB9 /* Simple_VK_ClientTests.m */; };
+		64F7C30F19DA96FA00EC6FB9 /* NewsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 64F7C30E19DA96FA00EC6FB9 /* NewsController.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,14 +36,19 @@
 		64F7C2D719D940F000EC6FB9 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		64F7C2D819D940F000EC6FB9 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		64F7C2DB19D940F000EC6FB9 /* Simple_VK_Client.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Simple_VK_Client.xcdatamodel; sourceTree = "<group>"; };
-		64F7C2DD19D940F000EC6FB9 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
-		64F7C2DE19D940F000EC6FB9 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
+		64F7C2DD19D940F000EC6FB9 /* LoginController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LoginController.h; sourceTree = "<group>"; };
+		64F7C2DE19D940F000EC6FB9 /* LoginController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LoginController.m; sourceTree = "<group>"; };
 		64F7C2E119D940F000EC6FB9 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		64F7C2E319D940F000EC6FB9 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		64F7C2E619D940F000EC6FB9 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
 		64F7C2EC19D940F000EC6FB9 /* Simple_VK_ClientTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Simple_VK_ClientTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		64F7C2F119D940F000EC6FB9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		64F7C2F219D940F000EC6FB9 /* Simple_VK_ClientTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Simple_VK_ClientTests.m; sourceTree = "<group>"; };
+		64F7C2FC19D95B7800EC6FB9 /* libPods-Simple_VK_Client-VK-ios-sdk.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libPods-Simple_VK_Client-VK-ios-sdk.a"; path = "Pods/build/Debug-iphoneos/libPods-Simple_VK_Client-VK-ios-sdk.a"; sourceTree = "<group>"; };
+		64F7C30D19DA96FA00EC6FB9 /* NewsController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NewsController.h; sourceTree = "<group>"; };
+		64F7C30E19DA96FA00EC6FB9 /* NewsController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NewsController.m; sourceTree = "<group>"; };
+		A57473B154054BA880FF59C3 /* libPods-Simple_VK_Client.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Simple_VK_Client.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		BEFCDB517C3549AEAA6457BC /* Pods-Simple_VK_Client.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Simple_VK_Client.xcconfig"; path = "Pods/Pods-Simple_VK_Client.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -49,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4D5384B92271497AA3EED2DA /* libPods-Simple_VK_Client.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -68,6 +76,8 @@
 				64F7C2D219D940F000EC6FB9 /* Simple_VK_Client */,
 				64F7C2EF19D940F000EC6FB9 /* Simple_VK_ClientTests */,
 				64F7C2D119D940F000EC6FB9 /* Products */,
+				BEFCDB517C3549AEAA6457BC /* Pods-Simple_VK_Client.xcconfig */,
+				D264459E80FC43A582B5D37F /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -83,14 +93,16 @@
 		64F7C2D219D940F000EC6FB9 /* Simple_VK_Client */ = {
 			isa = PBXGroup;
 			children = (
-				64F7C2D719D940F000EC6FB9 /* AppDelegate.h */,
-				64F7C2D819D940F000EC6FB9 /* AppDelegate.m */,
-				64F7C2DD19D940F000EC6FB9 /* ViewController.h */,
-				64F7C2DE19D940F000EC6FB9 /* ViewController.m */,
 				64F7C2E019D940F000EC6FB9 /* Main.storyboard */,
+				64F7C2DD19D940F000EC6FB9 /* LoginController.h */,
+				64F7C2DE19D940F000EC6FB9 /* LoginController.m */,
+				64F7C30D19DA96FA00EC6FB9 /* NewsController.h */,
+				64F7C30E19DA96FA00EC6FB9 /* NewsController.m */,
 				64F7C2E319D940F000EC6FB9 /* Images.xcassets */,
 				64F7C2E519D940F000EC6FB9 /* LaunchScreen.xib */,
 				64F7C2DA19D940F000EC6FB9 /* Simple_VK_Client.xcdatamodeld */,
+				64F7C2D719D940F000EC6FB9 /* AppDelegate.h */,
+				64F7C2D819D940F000EC6FB9 /* AppDelegate.m */,
 				64F7C2D319D940F000EC6FB9 /* Supporting Files */,
 			);
 			path = Simple_VK_Client;
@@ -122,6 +134,15 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
+		D264459E80FC43A582B5D37F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				64F7C2FC19D95B7800EC6FB9 /* libPods-Simple_VK_Client-VK-ios-sdk.a */,
+				A57473B154054BA880FF59C3 /* libPods-Simple_VK_Client.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -129,9 +150,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 64F7C2F619D940F000EC6FB9 /* Build configuration list for PBXNativeTarget "Simple_VK_Client" */;
 			buildPhases = (
+				4376315B38F649EBBFDE5674 /* Check Pods Manifest.lock */,
 				64F7C2CC19D940F000EC6FB9 /* Sources */,
 				64F7C2CD19D940F000EC6FB9 /* Frameworks */,
 				64F7C2CE19D940F000EC6FB9 /* Resources */,
+				FC8EA98906D249D382296729 /* Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -217,6 +240,39 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		4376315B38F649EBBFDE5674 /* Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Check Pods Manifest.lock";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [[ $? != 0 ]] ; then\n    cat << EOM\nerror: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\nEOM\n    exit 1\nfi\n";
+			showEnvVarsInLog = 0;
+		};
+		FC8EA98906D249D382296729 /* Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Copy Pods Resources";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Pods-Simple_VK_Client-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		64F7C2CC19D940F000EC6FB9 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -224,7 +280,8 @@
 			files = (
 				64F7C2D919D940F000EC6FB9 /* AppDelegate.m in Sources */,
 				64F7C2D619D940F000EC6FB9 /* main.m in Sources */,
-				64F7C2DF19D940F000EC6FB9 /* ViewController.m in Sources */,
+				64F7C30F19DA96FA00EC6FB9 /* NewsController.m in Sources */,
+				64F7C2DF19D940F000EC6FB9 /* LoginController.m in Sources */,
 				64F7C2DC19D940F000EC6FB9 /* Simple_VK_Client.xcdatamodeld in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -347,20 +404,30 @@
 		};
 		64F7C2F719D940F000EC6FB9 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = BEFCDB517C3549AEAA6457BC /* Pods-Simple_VK_Client.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = Simple_VK_Client/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Pods/build/Debug-iphoneos",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
 		};
 		64F7C2F819D940F000EC6FB9 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = BEFCDB517C3549AEAA6457BC /* Pods-Simple_VK_Client.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = Simple_VK_Client/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Pods/build/Debug-iphoneos",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -418,6 +485,7 @@
 				64F7C2F819D940F000EC6FB9 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		64F7C2F919D940F000EC6FB9 /* Build configuration list for PBXNativeTarget "Simple_VK_ClientTests" */ = {
 			isa = XCConfigurationList;
@@ -426,6 +494,7 @@
 				64F7C2FB19D940F000EC6FB9 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 
