@@ -7,9 +7,14 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "VKSdk.h"
+#import "NewsController.h"
+#import <AFNetworking.h>
 
-@interface LoginController : UIViewController <VKSdkDelegate>
+//#import "VKSdk.h"
+
+@interface LoginController : UIViewController <UIWebViewDelegate>
+
+@property (strong, nonatomic) NSManagedObjectContext *managedObjectContext;
 
 - (IBAction)loginButton:(id)sender;
 

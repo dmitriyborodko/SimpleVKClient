@@ -7,8 +7,15 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <AFNetworking.h>
+//#import "VKSdk.h"
 
 @interface NewsController : UITableViewController
+
+@property (strong, nonatomic) NSManagedObjectContext *managedObjectContext;
+@property AFHTTPRequestOperationManager *requestOprationManager;
+
 - (IBAction)exitButton:(id)sender;
+
 
 @end

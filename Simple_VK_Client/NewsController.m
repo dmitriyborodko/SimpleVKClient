@@ -7,6 +7,7 @@
 //
 
 #import "NewsController.h"
+#import "NewsCell.h"
 
 @interface NewsController ()
 
@@ -16,31 +17,67 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [self.navigationItem setHidesBackButton:YES];
-    
+    self.requestOprationManager = [AFHTTPRequestOperationManager manager];
+    self.navigationItem.hidesBackButton = YES;
+    self.navigationController.navigationItem.hidesBackButton = YES;
     self.refreshControl = [[UIRefreshControl alloc] init];
-    
     [self.refreshControl addTarget:self action:@selector(refreshInvoked:forState:) forControlEvents:UIControlEventValueChanged];
-    
-     self.clearsSelectionOnViewWillAppear = NO;
+}
+
+-(void)viewWillAppear:(BOOL)animated{
+    [self.navigationItem setHidesBackButton:YES];
 }
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
-#pragma mark - Table view data source
 
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-#warning Potentially incomplete method implementation.
-    // Return the number of sections.
-    return 0;
+- (void)sendText {
+    NSString *user_id = [[NSUserDefaults standardUserDefaults] objectForKey:@"VKAccessUserId"];
+    NSString *accessToken = [[NSUserDefaults standardUserDefaults] objectForKey:@"VKAccessToken"];
+    NSString *text = @"APItest";
+    NSString *sendTextMessage = [NSString stringWithFormat:@"https://api.vk.com/method/wall.post?owner_id=%@&access_token=%@&message=%@", user_id, accessToken, text];
+    
+    [self.requestOprationManager GET:sendTextMessage parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        NSLog(@"JSON: %@", responseObject);
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        NSLog(@"Error: %@", error);
+    }];
 }
 
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-#warning Incomplete method implementation.
-    // Return the number of rows in the section.
-    return 0;
+-(void)loadNewPosts{
+    
+}
+
+- (IBAction)exitButton:(id)sender{
+#warning add quit reqest
+    [self.requestOprationManager GET:@"http://api.vk.com/oauth/logout" parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        NSLog(@"JSON: %@", responseObject);
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        NSLog(@"Error: %@", error);
+    }];
+    
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"VKAccessUserId"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"VKAccessToken"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"VKAccessTokenDate"];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+    
+    //Deleting cookies to logout totally
+    NSHTTPCookie *cookie;
+    NSHTTPCookieStorage *storage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
+    for (cookie in [storage cookies]) {
+        NSString* domainName = [cookie domain];
+        NSRange domainRange = [domainName rangeOfString:@"vk.com"];
+        if(domainRange.length > 0) {
+            [storage deleteCookie:cookie];
+        }
+    }
+    UIAlertView *exitCompleteAlert = [[UIAlertView alloc] initWithTitle:@"Run, pussy, run" message:nil delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil, nil];
+    [exitCompleteAlert show];
+    
+    [self.navigationController popToRootViewControllerAnimated:YES];
+
 }
 
 - (void)refreshInvoked:(id)sender forState:(UIControlState)state {
@@ -50,19 +87,44 @@
     [self.refreshControl endRefreshing];
 }
 
-- (IBAction)exitButton:(id)sender{
-    [self.navigationController popToRootViewControllerAnimated:YES];
+#pragma mark - Table view
+
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
+#warning Incomplete method implementation.
+    // Return the number of rows in the section.
+    return 1;
 }
 
-/*
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:<#@"reuseIdentifier"#> forIndexPath:indexPath];
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"newsCell" forIndexPath:indexPath];
     
     // Configure the cell...
     
+    NSString *user_id = [[NSUserDefaults standardUserDefaults] objectForKey:@"VKAccessUserId"];
+    NSString *accessToken = [[NSUserDefaults standardUserDefaults] objectForKey:@"VKAccessToken"];
+    NSString *text = @"APItest";
+    NSString *sendTextMessage = [NSString stringWithFormat:@"https://api.vk.com/method/wall.post?owner_id=%@&access_token=%@&message=%@", user_id, accessToken, text];
+//    NSString *getNewsRequest = [NSString stringWithFormat:@"https://api.vk.com/method/newsfeed.get?filters=post&count=2&owner_id=%@&access_token=%@", user_id, accessToken];
+    
+
+    
+    [self.requestOprationManager GET:sendTextMessage parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        NSLog(@"JSON: %@", responseObject);
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        NSLog(@"Error: %@", error);
+    }];
+    
+    // News in JSON
+    
+//    [self.requestOprationManager GET:getNewsRequest parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+//        NSLog(@"JSON: %@", responseObject);
+//    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+//        NSLog(@"Error: %@", error);
+//    }];
+    
     return cell;
 }
-*/
+
 
 /*
 // Override to support conditional editing of the table view.

@@ -2,6 +2,7 @@
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="6245" systemVersion="13F34" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="BB1-kI-ZfU">
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6238"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
     <scenes>
         <!--Login Controller-->
@@ -17,19 +18,27 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="MWa-an-TMO">
-                                <rect key="frame" x="253" y="285" width="95" height="30"/>
+                                <rect key="frame" x="250" y="275" width="100" height="50"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="50" id="g70-9I-b7L"/>
+                                    <constraint firstAttribute="width" constant="100" id="jNE-nW-di4"/>
+                                </constraints>
                                 <state key="normal" title="Login with VK">
                                     <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                 </state>
+                                <variation key="widthClass=compact" misplaced="YES">
+                                    <rect key="frame" x="153" y="285" width="95" height="30"/>
+                                </variation>
                                 <connections>
                                     <action selector="loginButton:" destination="BYZ-38-t0r" eventType="touchUpInside" id="aEq-qM-Lmd"/>
+                                    <segue destination="cqc-PR-03t" kind="presentation" id="HOO-b5-USI"/>
                                 </connections>
                             </button>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <constraints>
                             <constraint firstAttribute="centerX" secondItem="MWa-an-TMO" secondAttribute="centerX" id="4qk-0x-6qz"/>
-                            <constraint firstAttribute="centerY" secondItem="MWa-an-TMO" secondAttribute="centerY" id="bUl-T9-DEZ"/>
+                            <constraint firstAttribute="centerY" secondItem="MWa-an-TMO" secondAttribute="centerY" id="j1j-A2-1TN"/>
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" id="2cM-Ac-8gU"/>
@@ -41,20 +50,64 @@
             </objects>
             <point key="canvasLocation" x="412" y="93"/>
         </scene>
+        <!--Authorization Controller-->
+        <scene sceneID="gKQ-19-ZCT">
+            <objects>
+                <viewController id="cqc-PR-03t" customClass="AuthorizationController" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="xn6-af-Yap"/>
+                        <viewControllerLayoutGuide type="bottom" id="2W0-aM-yyU"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="bZ1-kz-RRc">
+                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <webView contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="hUF-al-QRV">
+                                <rect key="frame" x="0.0" y="28" width="600" height="600"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                            </webView>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstItem="hUF-al-QRV" firstAttribute="top" secondItem="xn6-af-Yap" secondAttribute="bottom" constant="8" id="1NP-5u-EES"/>
+                            <constraint firstItem="hUF-al-QRV" firstAttribute="leading" secondItem="bZ1-kz-RRc" secondAttribute="leadingMargin" constant="-16" id="CFV-Vh-tzA"/>
+                            <constraint firstAttribute="trailingMargin" secondItem="hUF-al-QRV" secondAttribute="trailing" constant="-16" id="GOG-ir-xOY"/>
+                            <constraint firstAttribute="bottomMargin" secondItem="hUF-al-QRV" secondAttribute="bottom" constant="-28" id="Nj8-NL-Z6l"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="webView" destination="hUF-al-QRV" id="zdJ-sw-tMr"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="WvZ-ri-Von" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="723" y="838"/>
+        </scene>
         <!--News Controller-->
         <scene sceneID="OUw-TO-j9D">
             <objects>
                 <tableViewController id="V3J-Z0-JYd" customClass="NewsController" sceneMemberID="viewController">
-                    <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="x1m-ZQ-mR8">
+                    <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="50" sectionHeaderHeight="22" sectionFooterHeight="22" id="x1m-ZQ-mR8">
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <prototypes>
-                            <tableViewCell contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" id="JXS-TD-P6N">
+                            <tableViewCell contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" reuseIdentifier="newsCell" rowHeight="55" id="JXS-TD-P6N" customClass="NewsCell">
                                 <autoresizingMask key="autoresizingMask"/>
                                 <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="JXS-TD-P6N" id="10l-Oi-WjH">
                                     <autoresizingMask key="autoresizingMask"/>
+                                    <subviews>
+                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" text="Check your wall - it's been added smth" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="6a4-1w-W6O">
+                                            <rect key="frame" x="16" y="17" width="584" height="21"/>
+                                            <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                            <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                            <nil key="highlightedColor"/>
+                                        </label>
+                                    </subviews>
                                 </tableViewCellContentView>
+                                <connections>
+                                    <outlet property="postName" destination="6a4-1w-W6O" id="gMh-Re-AaD"/>
+                                </connections>
                             </tableViewCell>
                         </prototypes>
                         <connections>
@@ -63,9 +116,10 @@
                         </connections>
                     </tableView>
                     <navigationItem key="navigationItem" id="o7u-bH-Ulo">
+                        <barButtonItem key="backBarButtonItem" title="baka" id="muh-o3-y7a"/>
                         <barButtonItem key="rightBarButtonItem" style="done" id="Gpl-so-FZY">
                             <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" id="vEK-lk-LkN">
-                                <rect key="frame" x="-23" y="-15" width="133" height="30"/>
+                                <rect key="frame" x="484" y="7" width="80" height="30"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <state key="normal" title="Exit">
                                     <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>

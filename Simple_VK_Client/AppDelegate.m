@@ -16,6 +16,10 @@
 
 -(BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {
     
+    UINavigationController *navigationController = (UINavigationController *)self.window.rootViewController;
+    LoginController *controller = (LoginController *)navigationController.topViewController;
+    controller.managedObjectContext = self.managedObjectContext;
+    
     [VKSdk processOpenURL:url fromApplication:sourceApplication];
     return YES;
 }
