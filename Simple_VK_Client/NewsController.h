@@ -8,14 +8,23 @@
 
 #import <UIKit/UIKit.h>
 #import <AFNetworking.h>
-//#import "VKSdk.h"
+#import <CoreData/CoreData.h>
 
 @interface NewsController : UITableViewController
 
 @property (strong, nonatomic) NSManagedObjectContext *managedObjectContext;
 @property AFHTTPRequestOperationManager *requestOprationManager;
+@property NSMutableArray *arrayOfIndexPathesOfCellsWithImages;
+@property NSMutableDictionary *responseDictionary;
 
 - (IBAction)exitButton:(id)sender;
 
-
 @end
+
+typedef void (^ SuccessLoadBlock)(void);
+typedef void (^ FailureLoadBlock)(void);
+
+enum
+{
+    NUMBER_OF_NEWS_PER_LOAD_TWO = 1,
+};

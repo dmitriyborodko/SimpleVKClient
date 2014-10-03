@@ -5,6 +5,7 @@ target "Simple_VK_Client" do
 
 pod "VK-ios-sdk"
 pod "AFNetworking", "~> 2.0"
+pod "SDWebImage"
 
 end
 

@@ -19,6 +19,9 @@
 		64F7C30F19DA96FA00EC6FB9 /* NewsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 64F7C30E19DA96FA00EC6FB9 /* NewsController.m */; };
 		64F7C31519DBC4AF00EC6FB9 /* AuthorizationController.m in Sources */ = {isa = PBXBuildFile; fileRef = 64F7C31419DBC4AF00EC6FB9 /* AuthorizationController.m */; };
 		64F7C31A19DC0F8B00EC6FB9 /* NewsCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 64F7C31919DC0F8B00EC6FB9 /* NewsCell.m */; };
+		64F7C31C19DD584900EC6FB9 /* Like.png in Resources */ = {isa = PBXBuildFile; fileRef = 64F7C31B19DD584900EC6FB9 /* Like.png */; };
+		64F7C31E19DD58CA00EC6FB9 /* Repost.png in Resources */ = {isa = PBXBuildFile; fileRef = 64F7C31D19DD58CA00EC6FB9 /* Repost.png */; };
+		64F7C32419DEBB1500EC6FB9 /* NewsItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 64F7C32319DEBB1500EC6FB9 /* NewsItem.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -53,6 +56,10 @@
 		64F7C31419DBC4AF00EC6FB9 /* AuthorizationController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AuthorizationController.m; sourceTree = "<group>"; };
 		64F7C31819DC0F8B00EC6FB9 /* NewsCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NewsCell.h; sourceTree = "<group>"; };
 		64F7C31919DC0F8B00EC6FB9 /* NewsCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NewsCell.m; sourceTree = "<group>"; };
+		64F7C31B19DD584900EC6FB9 /* Like.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Like.png; sourceTree = "<group>"; };
+		64F7C31D19DD58CA00EC6FB9 /* Repost.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Repost.png; sourceTree = "<group>"; };
+		64F7C32219DEBB1500EC6FB9 /* NewsItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NewsItem.h; sourceTree = "<group>"; };
+		64F7C32319DEBB1500EC6FB9 /* NewsItem.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NewsItem.m; sourceTree = "<group>"; };
 		A57473B154054BA880FF59C3 /* libPods-Simple_VK_Client.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Simple_VK_Client.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BEFCDB517C3549AEAA6457BC /* Pods-Simple_VK_Client.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Simple_VK_Client.xcconfig"; path = "Pods/Pods-Simple_VK_Client.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -105,6 +112,8 @@
 				64F7C2E319D940F000EC6FB9 /* Images.xcassets */,
 				64F7C2E519D940F000EC6FB9 /* LaunchScreen.xib */,
 				64F7C2DA19D940F000EC6FB9 /* Simple_VK_Client.xcdatamodeld */,
+				64F7C32219DEBB1500EC6FB9 /* NewsItem.h */,
+				64F7C32319DEBB1500EC6FB9 /* NewsItem.m */,
 				64F7C2D719D940F000EC6FB9 /* AppDelegate.h */,
 				64F7C2D819D940F000EC6FB9 /* AppDelegate.m */,
 				64F7C2D319D940F000EC6FB9 /* Supporting Files */,
@@ -115,6 +124,8 @@
 		64F7C2D319D940F000EC6FB9 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				64F7C31B19DD584900EC6FB9 /* Like.png */,
+				64F7C31D19DD58CA00EC6FB9 /* Repost.png */,
 				64F7C2D419D940F000EC6FB9 /* Info.plist */,
 				64F7C2D519D940F000EC6FB9 /* main.m */,
 			);
@@ -253,6 +264,8 @@
 			files = (
 				64F7C2E219D940F000EC6FB9 /* Main.storyboard in Resources */,
 				64F7C2E719D940F000EC6FB9 /* LaunchScreen.xib in Resources */,
+				64F7C31E19DD58CA00EC6FB9 /* Repost.png in Resources */,
+				64F7C31C19DD584900EC6FB9 /* Like.png in Resources */,
 				64F7C2E419D940F000EC6FB9 /* Images.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -305,6 +318,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				64F7C2D919D940F000EC6FB9 /* AppDelegate.m in Sources */,
+				64F7C32419DEBB1500EC6FB9 /* NewsItem.m in Sources */,
 				64F7C31519DBC4AF00EC6FB9 /* AuthorizationController.m in Sources */,
 				64F7C2D619D940F000EC6FB9 /* main.m in Sources */,
 				64F7C31A19DC0F8B00EC6FB9 /* NewsCell.m in Sources */,

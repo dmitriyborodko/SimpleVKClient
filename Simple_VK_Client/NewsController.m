@@ -8,6 +8,7 @@
 
 #import "NewsController.h"
 #import "NewsCell.h"
+#import "NewsItem.h"
 
 @interface NewsController ()
 
@@ -22,40 +23,86 @@
     self.navigationController.navigationItem.hidesBackButton = YES;
     self.refreshControl = [[UIRefreshControl alloc] init];
     [self.refreshControl addTarget:self action:@selector(refreshInvoked:forState:) forControlEvents:UIControlEventValueChanged];
+    
+    self.arrayOfIndexPathesOfCellsWithImages = [[NSMutableArray alloc] init];
 }
 
--(void)viewWillAppear:(BOOL)animated{
-    [self.navigationItem setHidesBackButton:YES];
+- (void)getNewsFromVKWithSuccessBlock:(SuccessLoadBlock)successBlock andFailureBlock:(FailureLoadBlock)failureBlock {
+    NSString *userID = [[NSUserDefaults standardUserDefaults] objectForKey:@"VKAccessUserId"];
+    NSString *accessToken = [[NSUserDefaults standardUserDefaults] objectForKey:@"VKAccessToken"];
+    NSString *URLString = @"https://api.vk.com/method/newsfeed.get";
+    NSMutableDictionary *parameters = [[NSMutableDictionary alloc] init];
+        [parameters setObject:@"filters" forKey:@"post"];
+        [parameters setObject:@(NUMBER_OF_NEWS_PER_LOAD_TWO) forKey:@"count"];
+        [parameters setObject:userID forKey:@"owner_id"];
+        [parameters setObject:accessToken forKey:@"access_token"];
+    
+    //     News in JSON
+    [self.requestOprationManager GET:URLString parameters:parameters success:^(AFHTTPRequestOperation *operation, NSMutableDictionary *responseObject) {
+        NSLog(@"JSON: %@", responseObject);
+        NSLog(@"rquestd DONE");
+        self.responseDictionary = responseObject;
+        successBlock();
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        NSLog(@"Error: %@", error);
+        failureBlock();
+        UIAlertView *alertError = [[UIAlertView alloc] initWithTitle:@"Connection error" message:[error description] delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil, nil];
+        [alertError show];
+    }];
+}
+
+-(void)saveNewsItemToCoreData:(NSMutableDictionary*)responseObject{
+    for (NSDictionary *itemDictionary in (NSArray*)[[responseObject objectForKey:@"response"] objectForKey:@"items"]) {
+        NSString *postSenderID = [itemDictionary objectForKey:@"source_id"];
+        NSLog(@"   check  %@ " , postSenderID);
+        
+        NewsItem *newsItem = [NSEntityDescription insertNewObjectForEntityForName:@"NewsItem" inManagedObjectContext:self.managedObjectContext];
+        
+        if ([postSenderID integerValue] > 0) {
+            for (NSDictionary *profile in [[responseObject objectForKey:@"response"] objectForKey:@"profiles"]) {
+                if ([[profile objectForKey:@"uid"] integerValue] == [postSenderID integerValue]) {
+                    
+                    //Name (Profile)
+                    newsItem.name = [[[profile objectForKey:@"first_name"] stringByAppendingString:@" "] stringByAppendingString:[profile objectForKey:@"last_name"]];
+                    
+                    //Avatar
+                    NSURL *urlForAvatar = [NSURL URLWithString:[profile objectForKey:@"photo_medium_rec"]];
+                    newsItem.imageAvatar = [NSData dataWithContentsOfURL:urlForAvatar];
+                }
+            }
+        } else {
+            //delete minus before postSenderID
+            NSLog(@"%@", postSenderID);
+            long long convertToPositiveLongLongValue = [postSenderID longLongValue];
+            convertToPositiveLongLongValue = convertToPositiveLongLongValue * (-1);
+            NSString *postSenderIDPositive = [NSString stringWithFormat:@"%lld", convertToPositiveLongLongValue];
+            
+            for (NSDictionary *group in [[responseObject objectForKey:@"response"] objectForKey:@"groups"]) {
+                if ([[group objectForKey:@"gid"] integerValue] == [postSenderIDPositive integerValue]) {
+                    
+                    //Name (Group)
+                    newsItem.name = [group objectForKey:@"name"];
+                    
+                    //Avatar
+                    NSURL *urlForAvatar = [NSURL URLWithString:[group objectForKey:@"photo_medium"]];
+                    newsItem.imageAvatar = [NSData dataWithContentsOfURL:urlForAvatar];
+                }
+            }
+        }
+    }
 }
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
-}
-
-- (void)sendText {
-    NSString *user_id = [[NSUserDefaults standardUserDefaults] objectForKey:@"VKAccessUserId"];
-    NSString *accessToken = [[NSUserDefaults standardUserDefaults] objectForKey:@"VKAccessToken"];
-    NSString *text = @"APItest";
-    NSString *sendTextMessage = [NSString stringWithFormat:@"https://api.vk.com/method/wall.post?owner_id=%@&access_token=%@&message=%@", user_id, accessToken, text];
-    
-    [self.requestOprationManager GET:sendTextMessage parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        NSLog(@"JSON: %@", responseObject);
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        NSLog(@"Error: %@", error);
-    }];
-}
-
--(void)loadNewPosts{
-    
 }
 
 - (IBAction)exitButton:(id)sender{
-#warning add quit reqest
     [self.requestOprationManager GET:@"http://api.vk.com/oauth/logout" parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
         NSLog(@"JSON: %@", responseObject);
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"Error: %@", error);
+        UIAlertView *alertError = [[UIAlertView alloc] initWithTitle:@"Connection error" message:[error description] delegate:nil cancelButtonTitle:nil otherButtonTitles:nil, nil];
+        [alertError show];
     }];
     
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"VKAccessUserId"];
@@ -81,93 +128,87 @@
 }
 
 - (void)refreshInvoked:(id)sender forState:(UIControlState)state {
-    // Refresh table here...
-    [self.tableView reloadData];
-    [self.tableView addSubview:self.refreshControl];
-    [self.refreshControl endRefreshing];
+    SuccessLoadBlock blockToExecuteWhenResponseRecieved = ^(void){
+        [self.tableView reloadData];
+        [self.tableView addSubview:self.refreshControl];
+        [self.refreshControl endRefreshing];
+    };
+    FailureLoadBlock blockToExecuteWhenResponseFailed = ^(void){
+        [self.tableView addSubview:self.refreshControl];
+        [self.refreshControl endRefreshing];
+    };
+    [self getNewsFromVKWithSuccessBlock:blockToExecuteWhenResponseRecieved andFailureBlock:blockToExecuteWhenResponseFailed];
 }
 
 #pragma mark - Table view
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-#warning Incomplete method implementation.
-    // Return the number of rows in the section.
-    return 1;
+    if (self.responseDictionary) {
+        NSInteger howManyItemsInRequest = [(NSArray*)[[self.responseDictionary objectForKey:@"response"] objectForKey:@"items"] count];
+        return howManyItemsInRequest;
+    }
+    return 0;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"newsCell" forIndexPath:indexPath];
-    
-    // Configure the cell...
-    
-    NSString *user_id = [[NSUserDefaults standardUserDefaults] objectForKey:@"VKAccessUserId"];
-    NSString *accessToken = [[NSUserDefaults standardUserDefaults] objectForKey:@"VKAccessToken"];
-    NSString *text = @"APItest";
-    NSString *sendTextMessage = [NSString stringWithFormat:@"https://api.vk.com/method/wall.post?owner_id=%@&access_token=%@&message=%@", user_id, accessToken, text];
-//    NSString *getNewsRequest = [NSString stringWithFormat:@"https://api.vk.com/method/newsfeed.get?filters=post&count=2&owner_id=%@&access_token=%@", user_id, accessToken];
-    
-
-    
-    [self.requestOprationManager GET:sendTextMessage parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        NSLog(@"JSON: %@", responseObject);
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        NSLog(@"Error: %@", error);
-    }];
-    
-    // News in JSON
-    
-//    [self.requestOprationManager GET:getNewsRequest parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
-//        NSLog(@"JSON: %@", responseObject);
-//    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-//        NSLog(@"Error: %@", error);
-//    }];
+    NewsCell *cell = [tableView dequeueReusableCellWithIdentifier:@"newsCell" forIndexPath:indexPath];
+   
+    [self setUpNewsCell:cell forIndexPath:indexPath andResponseObject:(NSDictionary*)self.responseDictionary];
     
     return cell;
 }
 
-
-/*
-// Override to support conditional editing of the table view.
-- (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
-    // Return NO if you do not want the specified item to be editable.
-    return YES;
+- (void)setUpNewsCell:(NewsCell*)cell forIndexPath:(NSIndexPath*)indexPath andResponseObject:(NSDictionary*)responseObject{
+    NSString *postSenderID = [[(NSArray*)[[responseObject objectForKey:@"response"] objectForKey:@"items"] objectAtIndex:indexPath.row] objectForKey:@"source_id"];
+    NSLog(@"   check  %@ " , postSenderID);
+    
+    if ([postSenderID integerValue] > 0) {
+        for (NSDictionary *profile in [[responseObject objectForKey:@"response"] objectForKey:@"profiles"]) {
+            if ([[profile objectForKey:@"uid"] integerValue] == [postSenderID integerValue]) {
+                
+                //Name (Profile)
+                [cell.nameOfPostSender setText:[[[profile objectForKey:@"first_name"] stringByAppendingString:@" "] stringByAppendingString:[profile objectForKey:@"last_name"]]];
+                
+                //Avatar
+                NSURL *urlForAvatar = [NSURL URLWithString:[profile objectForKey:@"photo_medium_rec"]];
+                NSData *dataForAvatar = [NSData dataWithContentsOfURL:urlForAvatar];
+                UIImage *imageAvatar = [[UIImage alloc] initWithData:dataForAvatar];
+                [cell.imageOfPostSender setImage:imageAvatar];
+            }
+        }
+    } else {
+        NSLog(@"%@", postSenderID);
+        long long convertToPositiveLongLongValue = [postSenderID longLongValue];
+        convertToPositiveLongLongValue = convertToPositiveLongLongValue * (-1);
+        NSString *postSenderIDPositive = [NSString stringWithFormat:@"%lld", convertToPositiveLongLongValue];
+        
+        for (NSDictionary *group in [[responseObject objectForKey:@"response"] objectForKey:@"groups"]) {
+            if ([[group objectForKey:@"gid"] integerValue] == [postSenderIDPositive integerValue]) {
+                
+                //Name (Group)
+                [cell.nameOfPostSender setText:[group objectForKey:@"name"]];
+                
+                //Avatar
+                NSURL *urlForAvatar = [NSURL URLWithString:[group objectForKey:@"photo_medium"]];
+                NSData *dataForAvatar = [NSData dataWithContentsOfURL:urlForAvatar];
+                UIImage *imageAvatar = [[UIImage alloc] initWithData:dataForAvatar];
+                [cell.imageOfPostSender setImage:imageAvatar];
+            }
+        }
+    }
+    
+    //Date
+    [cell.dateOfPost setText:[[(NSArray*)[[responseObject objectForKey:@"response"] objectForKey:@"items"] objectAtIndex:indexPath.row] objectForKey:@"date"]];
 }
-*/
 
-/*
-// Override to support editing the table view.
-- (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (editingStyle == UITableViewCellEditingStyleDelete) {
-        // Delete the row from the data source
-        [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
-    } else if (editingStyle == UITableViewCellEditingStyleInsert) {
-        // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-    }   
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
+    if (![self.arrayOfIndexPathesOfCellsWithImages containsObject:indexPath]) {
+        return 98.0f;
+    } else {
+        return 236.0f;
+    }
 }
-*/
 
-/*
-// Override to support rearranging the table view.
-- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
-}
-*/
 
-/*
-// Override to support conditional rearranging of the table view.
-- (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath {
-    // Return NO if you do not want the item to be re-orderable.
-    return YES;
-}
-*/
-
-/*
-#pragma mark - Navigation
-
-// In a storyboard-based application, you will often want to do a little preparation before navigation
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
-}
-*/
 
 @end
