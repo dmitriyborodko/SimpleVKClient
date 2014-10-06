@@ -9,8 +9,7 @@
 #import <UIKit/UIKit.h>
 #import "NewsController.h"
 #import <AFNetworking.h>
-
-//#import "VKSdk.h"
+#import <CoreData/CoreData.h>
 
 @interface LoginController : UIViewController <UIWebViewDelegate>
 

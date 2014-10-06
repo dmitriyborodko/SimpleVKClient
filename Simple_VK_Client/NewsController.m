@@ -25,6 +25,7 @@
     [self.refreshControl addTarget:self action:@selector(refreshInvoked:forState:) forControlEvents:UIControlEventValueChanged];
     
     self.arrayOfIndexPathesOfCellsWithImages = [[NSMutableArray alloc] init];
+    self.isFirstRequestResponsed = YES;
 }
 
 - (void)getNewsFromVKWithSuccessBlock:(SuccessLoadBlock)successBlock andFailureBlock:(FailureLoadBlock)failureBlock {
@@ -42,6 +43,7 @@
         NSLog(@"JSON: %@", responseObject);
         NSLog(@"rquestd DONE");
         self.responseDictionary = responseObject;
+        [self saveNewsItemToCoreData:responseObject];
         successBlock();
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
         NSLog(@"Error: %@", error);
@@ -51,12 +53,33 @@
     }];
 }
 
+-(void)deleteAllInstancesFromCoreData{
+    NSFetchRequest * newsFetchRequest = [[NSFetchRequest alloc] init];
+    [newsFetchRequest setEntity:[NSEntityDescription entityForName:@"NewsItem" inManagedObjectContext:self.managedObjectContext]];
+    [newsFetchRequest setIncludesPropertyValues:NO];
+    NSError * error = nil;
+    NSArray * arrayOfInstances = [self.managedObjectContext executeFetchRequest:newsFetchRequest error:&error];
+    for (NSManagedObject * car in arrayOfInstances) {
+        [self.managedObjectContext deleteObject:car];
+    }
+    NSError *saveError = nil;
+    [self.managedObjectContext save:&saveError];
+    self.isFirstRequestResponsed = NO;
+}
+
 -(void)saveNewsItemToCoreData:(NSMutableDictionary*)responseObject{
+    if (self.isFirstRequestResponsed) {
+        [self deleteAllInstancesFromCoreData];
+    }
     for (NSDictionary *itemDictionary in (NSArray*)[[responseObject objectForKey:@"response"] objectForKey:@"items"]) {
         NSString *postSenderID = [itemDictionary objectForKey:@"source_id"];
         NSLog(@"   check  %@ " , postSenderID);
-        
         NewsItem *newsItem = [NSEntityDescription insertNewObjectForEntityForName:@"NewsItem" inManagedObjectContext:self.managedObjectContext];
+        
+        //Date
+        NSDate *date = [NSDate dateWithTimeIntervalSince1970:[[itemDictionary objectForKey:@"date"] longLongValue]];
+        newsItem.date = date;
+        
         
         if ([postSenderID integerValue] > 0) {
             for (NSDictionary *profile in [[responseObject objectForKey:@"response"] objectForKey:@"profiles"]) {
@@ -90,6 +113,28 @@
             }
         }
     }
+}
+
+-(void)loadNewsFromCoreDataForCell:(NewsCell*)cell OnIndexPath:(NSIndexPath*)indexPath{
+    NSFetchRequest * newsFetchRequest = [[NSFetchRequest alloc] init];
+    [newsFetchRequest setEntity:[NSEntityDescription entityForName:@"NewsItem" inManagedObjectContext:self.managedObjectContext]];
+    NSError * error = nil;
+    NewsItem *newsItemFromCoreData = [[self.managedObjectContext executeFetchRequest:newsFetchRequest error:&error] objectAtIndex:indexPath.row];
+    
+    //Name
+    [cell.nameOfPostSender setText:newsItemFromCoreData.name];
+    
+    //Avatar
+    UIImage *imageAvatar = [[UIImage alloc] initWithData:newsItemFromCoreData.imageAvatar];
+    [cell.imageOfPostSender setImage:imageAvatar];
+    
+    //Date
+    NSDateFormatter *dateFormat = [[NSDateFormatter alloc] init];
+    [dateFormat setDateFormat:@"YYYY-MM-dd\'T\'HH:mm:ssZZZZZ"];
+    NSDate *formattedDate = [dateFormat dateFromString:[newsItemFromCoreData.date description]];
+    [dateFormat setDateFormat:@"HH:mm:ss dd/MM"];
+    [cell.dateOfPost setText:[NSString stringWithFormat:@"%@",[dateFormat stringFromDate:formattedDate]]];
+    
 }
 
 - (void)didReceiveMemoryWarning {
@@ -159,47 +204,8 @@
 }
 
 - (void)setUpNewsCell:(NewsCell*)cell forIndexPath:(NSIndexPath*)indexPath andResponseObject:(NSDictionary*)responseObject{
-    NSString *postSenderID = [[(NSArray*)[[responseObject objectForKey:@"response"] objectForKey:@"items"] objectAtIndex:indexPath.row] objectForKey:@"source_id"];
-    NSLog(@"   check  %@ " , postSenderID);
-    
-    if ([postSenderID integerValue] > 0) {
-        for (NSDictionary *profile in [[responseObject objectForKey:@"response"] objectForKey:@"profiles"]) {
-            if ([[profile objectForKey:@"uid"] integerValue] == [postSenderID integerValue]) {
-                
-                //Name (Profile)
-                [cell.nameOfPostSender setText:[[[profile objectForKey:@"first_name"] stringByAppendingString:@" "] stringByAppendingString:[profile objectForKey:@"last_name"]]];
-                
-                //Avatar
-                NSURL *urlForAvatar = [NSURL URLWithString:[profile objectForKey:@"photo_medium_rec"]];
-                NSData *dataForAvatar = [NSData dataWithContentsOfURL:urlForAvatar];
-                UIImage *imageAvatar = [[UIImage alloc] initWithData:dataForAvatar];
-                [cell.imageOfPostSender setImage:imageAvatar];
-            }
-        }
-    } else {
-        NSLog(@"%@", postSenderID);
-        long long convertToPositiveLongLongValue = [postSenderID longLongValue];
-        convertToPositiveLongLongValue = convertToPositiveLongLongValue * (-1);
-        NSString *postSenderIDPositive = [NSString stringWithFormat:@"%lld", convertToPositiveLongLongValue];
-        
-        for (NSDictionary *group in [[responseObject objectForKey:@"response"] objectForKey:@"groups"]) {
-            if ([[group objectForKey:@"gid"] integerValue] == [postSenderIDPositive integerValue]) {
-                
-                //Name (Group)
-                [cell.nameOfPostSender setText:[group objectForKey:@"name"]];
-                
-                //Avatar
-                NSURL *urlForAvatar = [NSURL URLWithString:[group objectForKey:@"photo_medium"]];
-                NSData *dataForAvatar = [NSData dataWithContentsOfURL:urlForAvatar];
-                UIImage *imageAvatar = [[UIImage alloc] initWithData:dataForAvatar];
-                [cell.imageOfPostSender setImage:imageAvatar];
-            }
-        }
+    [self loadNewsFromCoreDataForCell:cell OnIndexPath:indexPath];
     }
-    
-    //Date
-    [cell.dateOfPost setText:[[(NSArray*)[[responseObject objectForKey:@"response"] objectForKey:@"items"] objectAtIndex:indexPath.row] objectForKey:@"date"]];
-}
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
     if (![self.arrayOfIndexPathesOfCellsWithImages containsObject:indexPath]) {

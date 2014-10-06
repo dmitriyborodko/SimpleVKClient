@@ -10,14 +10,19 @@
 #import <AFNetworking.h>
 #import <CoreData/CoreData.h>
 
+//#define NewsItemString @"NewsItem";
+
 @interface NewsController : UITableViewController
 
 @property (strong, nonatomic) NSManagedObjectContext *managedObjectContext;
 @property AFHTTPRequestOperationManager *requestOprationManager;
 @property NSMutableArray *arrayOfIndexPathesOfCellsWithImages;
 @property NSMutableDictionary *responseDictionary;
+@property BOOL isFirstRequestResponsed;
 
 - (IBAction)exitButton:(id)sender;
+
+
 
 @end
 
@@ -26,5 +31,5 @@ typedef void (^ FailureLoadBlock)(void);
 
 enum
 {
-    NUMBER_OF_NEWS_PER_LOAD_TWO = 1,
+    NUMBER_OF_NEWS_PER_LOAD_TWO = 20,
 };
