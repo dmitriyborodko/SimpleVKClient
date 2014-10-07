@@ -9,16 +9,19 @@
 #import <UIKit/UIKit.h>
 #import <AFNetworking.h>
 #import <CoreData/CoreData.h>
+#import <CCBottomRefreshControl/UIScrollView+BottomRefreshControl.h>
 
 //#define NewsItemString @"NewsItem";
 
-@interface NewsController : UITableViewController
+@interface NewsController : UITableViewController <NSFetchedResultsControllerDelegate, UIScrollViewDelegate>
 
 @property (strong, nonatomic) NSManagedObjectContext *managedObjectContext;
+@property (strong, nonatomic) NSFetchedResultsController *fetchedResultsController;
 @property AFHTTPRequestOperationManager *requestOprationManager;
 @property NSMutableArray *arrayOfIndexPathesOfCellsWithImages;
 @property NSMutableDictionary *responseDictionary;
-@property BOOL isFirstRequestResponsed;
+@property BOOL isRefreshing;
+
 
 - (IBAction)exitButton:(id)sender;
 
@@ -31,5 +34,5 @@ typedef void (^ FailureLoadBlock)(void);
 
 enum
 {
-    NUMBER_OF_NEWS_PER_LOAD_TWO = 20,
+    NUMBER_OF_NEWS_PER_LOAD_TWO = 2,
 };
