@@ -28,7 +28,80 @@
     self.tableView.bottomRefreshControl = [[UIRefreshControl alloc] init];
     [self.tableView.bottomRefreshControl addTarget:self action:@selector(loadNewPosts) forControlEvents:UIControlEventValueChanged];
     
+    self.arrayOfIndexPathesOfCellsWithImages = [[NSMutableArray alloc] init];
+    
+    id <NSFetchedResultsSectionInfo> sectionInfo = [self.fetchedResultsController sections][0];
+    NSLog(@"%lu", (unsigned long)[sectionInfo numberOfObjects]);
+    //refresh bottom
+
 }
+
+- (IBAction)exitButton:(id)sender{
+    [self.requestOprationManager GET:@"http://api.vk.com/oauth/logout" parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        NSLog(@"JSON: %@", responseObject);
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        NSLog(@"Error: %@", error);
+        UIAlertView *alertError = [[UIAlertView alloc] initWithTitle:@"Connection error" message:[error description] delegate:nil cancelButtonTitle:nil otherButtonTitles:nil, nil];
+        [alertError show];
+    }];
+    
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"VKAccessUserId"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"VKAccessToken"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"VKAccessTokenDate"];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+    
+    //Deleting cookies to logout totally
+    NSHTTPCookie *cookie;
+    NSHTTPCookieStorage *storage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
+    for (cookie in [storage cookies]) {
+        NSString* domainName = [cookie domain];
+        NSRange domainRange = [domainName rangeOfString:@"vk.com"];
+        if(domainRange.length > 0) {
+            [storage deleteCookie:cookie];
+        }
+    }
+    UIAlertView *exitCompleteAlert = [[UIAlertView alloc] initWithTitle:@"Run, pussy, run" message:nil delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil, nil];
+    [exitCompleteAlert show];
+    
+    [self.navigationController popToRootViewControllerAnimated:YES];
+    
+}
+
+-(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender{
+    if ([segue.identifier isEqualToString:@"showDetail"]) {
+        NSIndexPath *indexPath = [self.tableView indexPathForSelectedRow];
+        NewsItem *detailItem = [self.fetchedResultsController objectAtIndexPath:indexPath];
+        [[segue destinationViewController] setDetailItem:detailItem];
+    }
+}
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+}
+
+- (UIImage *)imageWithImage:(UIImage *)image scaledToSize:(CGSize)newSize {
+    UIGraphicsBeginImageContextWithOptions(newSize, NO, 1.0);
+    [image drawInRect:CGRectMake(0, 0, newSize.width, newSize.height)];
+    UIImage *newImage = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return newImage;
+}
+
+
+//- (void)scrollViewDidScroll:(UIScrollView *)scrollView
+//{
+//    if ((scrollView.contentOffset.y + scrollView.frame.size.height - 100) >= scrollView.contentSize.height)
+//    {
+//        NSLog(@"yup");
+//        UIView* footerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 320, 50)];
+//        [footerView setBackgroundColor:[UIColor colorWithPatternImage:[UIImage imageNamed:@"Like.png"]]];
+//        self.tableView.tableFooterView = footerView;
+//    }
+//}
+
+
+#pragma mark - Networking
+
 
 - (void)getNewsFromVKWithSuccessBlock:(SuccessLoadBlock)successBlock andFailureBlock:(FailureLoadBlock)failureBlock {
     NSString *userID = [[NSUserDefaults standardUserDefaults] objectForKey:@"VKAccessUserId"];
@@ -39,48 +112,57 @@
         [parameters setObject:@(NUMBER_OF_NEWS_PER_LOAD_TWO) forKey:@"count"];
         [parameters setObject:userID forKey:@"owner_id"];
         [parameters setObject:accessToken forKey:@"access_token"];
-    if (self.responseDictionary && !self.isRefreshing) {
+    if (self.isRefreshing) {
         id <NSFetchedResultsSectionInfo> sectionInfo = [self.fetchedResultsController sections][0];
         NSString *offset = [NSString stringWithFormat:@"%li",  (unsigned long)[sectionInfo numberOfObjects]];
         [parameters setObject:offset forKey:@"offset"];
     }
     
     //     News in JSON
-    [self.requestOprationManager GET:URLString parameters:parameters success:^(AFHTTPRequestOperation *operation, NSMutableDictionary *responseObject) {
-//        NSLog(@"JSON: %@", responseObject);
-        NSLog(@"rquestd DONE");
-        self.responseDictionary = responseObject;
-        [self saveNewsItemToCoreData:responseObject];
-        successBlock();
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        NSLog(@"Error: %@", error);
-        failureBlock();
-        UIAlertView *alertError = [[UIAlertView alloc] initWithTitle:@"Connection error" message:[error description] delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil, nil];
-        [alertError show];
-    }];
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        /* Код, который должен выполниться в фоне */
+        [self.requestOprationManager GET:URLString parameters:parameters success:^(AFHTTPRequestOperation *operation, NSMutableDictionary *responseObject) {
+                    NSLog(@"JSON: %@", responseObject);
+            NSLog(@"rquestd DONE");
+            self.responseDictionary = responseObject;
+            [self saveNewsItemToCoreData:responseObject];
+            successBlock();
+        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+            NSLog(@"Error: %@", error);
+            failureBlock();
+            UIAlertView *alertError = [[UIAlertView alloc] initWithTitle:@"Connection error" message:[error description] delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil, nil];
+            [alertError show];
+        }];
+    });
+    
 }
 
 -(void)deleteAllInstancesFromCoreData{
     self.arrayOfIndexPathesOfCellsWithImages = [[NSMutableArray alloc] init];
-
+    [NSFetchedResultsController deleteCacheWithName:@"cache"];
+    [NSFetchedResultsController deleteCacheWithName:nil];
+    
     NSFetchRequest * newsFetchRequest = [[NSFetchRequest alloc] init];
     [newsFetchRequest setEntity:[NSEntityDescription entityForName:@"NewsItem" inManagedObjectContext:self.managedObjectContext]];
     [newsFetchRequest setIncludesPropertyValues:NO];
     NSError * error = nil;
     NSArray * arrayOfInstances = [self.managedObjectContext executeFetchRequest:newsFetchRequest error:&error];
-    for (NSManagedObject * car in arrayOfInstances) {
-        [self.managedObjectContext deleteObject:car];
+    for (NSManagedObject * newsItem in arrayOfInstances) {
+        [self.managedObjectContext deleteObject:newsItem];
     }
     NSError *saveError = nil;
     [self.managedObjectContext save:&saveError];
     self.isRefreshing = NO;
-    
-    self.responseDictionary = [[NSMutableArray alloc] init];
 }
 
 -(void)saveNewsItemToCoreData:(NSMutableDictionary*)responseObject{
     if (self.isRefreshing) {
         [self deleteAllInstancesFromCoreData];
+        NSError *error;
+        [self.managedObjectContext save:&error];
+        if (error) {
+            NSLog(@"%@", error);
+        }
     }
     for (NSDictionary *itemDictionary in (NSArray*)[[responseObject objectForKey:@"response"] objectForKey:@"items"]) {
         NSString *postSenderID = [itemDictionary objectForKey:@"source_id"];
@@ -110,6 +192,24 @@
             }
         }
         
+        //Записать Короч то що надо
+        //More images
+        NSMutableArray *arrayOfImages = [[NSMutableArray alloc] init];
+        for (NSDictionary *attachmentItem in [itemDictionary objectForKey:@"attachments"]) {
+            [attachmentItem objectForKey:@"photo"];
+            if ([[attachmentItem objectForKey:@"type"]  isEqual: @"photo"]) {
+                NSURL *urlForImageBig = [NSURL URLWithString:[[attachmentItem objectForKey:@"photo"] objectForKey:@"src_big"]];
+                NSURL *urlForImage = [NSURL URLWithString:[[attachmentItem objectForKey:@"photo"] objectForKey:@"src"]];
+                if (urlForImageBig) {
+                    UIImage *imageBig = [[UIImage alloc] initWithData:[NSData dataWithContentsOfURL:urlForImageBig]];
+                    newsItem.imagePostOne = UIImageJPEGRepresentation([self imageWithImage:imageBig scaledToSize:CGSizeMake(260, 260)], 1);
+                } else {
+                    UIImage *image = [[UIImage alloc] initWithData:[NSData dataWithContentsOfURL:urlForImage]];
+                    newsItem.imagePostOne = UIImageJPEGRepresentation([self imageWithImage:image scaledToSize:CGSizeMake(260, 260)], 1);
+                }
+            }
+        }
+     
         //Likes
         newsItem.likes =[[[itemDictionary objectForKey:@"likes"] objectForKey:@"count"] stringValue];
         
@@ -131,7 +231,7 @@
             }
         } else {
             //delete minus before postSenderID
-//            NSLog(@"%@", postSenderID);
+            //            NSLog(@"%@", postSenderID);
             long long convertToPositiveLongLongValue = [postSenderID longLongValue];
             convertToPositiveLongLongValue = convertToPositiveLongLongValue * (-1);
             NSString *postSenderIDPositive = [NSString stringWithFormat:@"%lld", convertToPositiveLongLongValue];
@@ -150,22 +250,14 @@
             }
         }
     }
-    //Save
-//    [self.managedObjectContext save:nil];
+    self.responseDictionary = [[NSMutableDictionary alloc] init];
+    self.isRefreshing = NO;
 }
 
 -(void)loadNewsFromCoreDataForCell:(NewsCell*)cell OnIndexPath:(NSIndexPath*)indexPath{
-//    NSFetchRequest * newsFetchRequest = [[NSFetchRequest alloc] init];
-//    [newsFetchRequest setEntity:[NSEntityDescription entityForName:@"NewsItem" inManagedObjectContext:self.managedObjectContext]];
-//    
-//    NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"date" ascending:NO];
-//    NSArray *sortDescriptors = @[sortDescriptor];
-//    [newsFetchRequest setSortDescriptors:sortDescriptors];
-    
-//    [self.fetchedResultsController fetchRequest];
-    
-    NSError * error = nil;
-    NewsItem *newsItemFromCoreData = [[self.managedObjectContext executeFetchRequest:[self.fetchedResultsController fetchRequest] error:&error] objectAtIndex:indexPath.row];
+//    NSError *error = nil;
+//    NewsItem *newsItemFromCoreData = [[self.managedObjectContext executeFetchRequest:[self.fetchedResultsController fetchRequest] error:&error] objectAtIndex:indexPath.row];
+    NewsItem *newsItemFromCoreData = [self.fetchedResultsController objectAtIndexPath:indexPath];
     
     //Name
     [cell.nameOfPostSender setText:newsItemFromCoreData.name];
@@ -205,51 +297,11 @@
     [cell.repostsOfPost setText:newsItemFromCoreData.reposts];
 }
 
-- (UIImage *)imageWithImage:(UIImage *)image scaledToSize:(CGSize)newSize {
-    //UIGraphicsBeginImageContext(newSize);
-    // In next line, pass 0.0 to use the current device's pixel scaling factor (and thus account for Retina resolution).
-    // Pass 1.0 to force exact pixel size.
-    UIGraphicsBeginImageContextWithOptions(newSize, NO, 1.0);
-    [image drawInRect:CGRectMake(0, 0, newSize.width, newSize.height)];
-    UIImage *newImage = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    return newImage;
-}
 
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-}
 
-- (IBAction)exitButton:(id)sender{
-    [self.requestOprationManager GET:@"http://api.vk.com/oauth/logout" parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        NSLog(@"JSON: %@", responseObject);
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        NSLog(@"Error: %@", error);
-        UIAlertView *alertError = [[UIAlertView alloc] initWithTitle:@"Connection error" message:[error description] delegate:nil cancelButtonTitle:nil otherButtonTitles:nil, nil];
-        [alertError show];
-    }];
-    
-    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"VKAccessUserId"];
-    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"VKAccessToken"];
-    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"VKAccessTokenDate"];
-    [[NSUserDefaults standardUserDefaults] synchronize];
-    
-    //Deleting cookies to logout totally
-    NSHTTPCookie *cookie;
-    NSHTTPCookieStorage *storage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
-    for (cookie in [storage cookies]) {
-        NSString* domainName = [cookie domain];
-        NSRange domainRange = [domainName rangeOfString:@"vk.com"];
-        if(domainRange.length > 0) {
-            [storage deleteCookie:cookie];
-        }
-    }
-    UIAlertView *exitCompleteAlert = [[UIAlertView alloc] initWithTitle:@"Run, pussy, run" message:nil delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil, nil];
-    [exitCompleteAlert show];
-    
-    [self.navigationController popToRootViewControllerAnimated:YES];
 
-}
+
+
 
 - (void)refreshInvoked:(id)sender forState:(UIControlState)state {
     SuccessLoadBlock blockToExecuteWhenResponseRecieved = ^(void){
@@ -260,8 +312,9 @@
         [self.tableView addSubview:self.refreshControl];
         [self.refreshControl endRefreshing];
     };
-    self.isRefreshing = YES;
-    [self getNewsFromVKWithSuccessBlock:blockToExecuteWhenResponseRecieved andFailureBlock:blockToExecuteWhenResponseFailed];
+        self.isRefreshing = YES;
+        [self getNewsFromVKWithSuccessBlock:blockToExecuteWhenResponseRecieved andFailureBlock:blockToExecuteWhenResponseFailed];
+    
 }
 
 - (void)loadNewPosts {
@@ -273,14 +326,7 @@
         [self.tableView addSubview:self.tableView.bottomRefreshControl];
         [self.tableView.bottomRefreshControl endRefreshing];
     };
-    self.isRefreshing = NO;
     [self getNewsFromVKWithSuccessBlock:blockToExecuteWhenResponseRecieved andFailureBlock:blockToExecuteWhenResponseFailed];
-//    
-//    NSLog(@"WORKIN");
-//    [self.tableView.bottomRefreshControl beginRefreshing];
-//    [self.tableView reloadData];
-//    [self.tableView addSubview:self.tableView.bottomRefreshControl];
-//    [self.tableView.bottomRefreshControl endRefreshing];
 }
 
 
@@ -330,6 +376,16 @@
     }
 }
 
+-(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+    [self performSegueWithIdentifier:@"showDetail" sender:nil];
+}
+
+-(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
+    return nil;
+}
+
+
+
 #pragma mark - Fetched results controller
 
 - (NSFetchedResultsController *)fetchedResultsController{
@@ -342,7 +398,7 @@
     NSArray *sortDescriptors = @[sortDescriptor];
     [fetchRequest setSortDescriptors:sortDescriptors];
     
-    NSFetchedResultsController *aFetchedResultsController = [[NSFetchedResultsController alloc] initWithFetchRequest:fetchRequest managedObjectContext:self.managedObjectContext sectionNameKeyPath:nil cacheName:@"cache"];
+    NSFetchedResultsController *aFetchedResultsController = [[NSFetchedResultsController alloc] initWithFetchRequest:fetchRequest managedObjectContext:self.managedObjectContext sectionNameKeyPath:nil cacheName:nil];
     aFetchedResultsController.delegate = self;
     self.fetchedResultsController = aFetchedResultsController;
     NSError *error = nil;
