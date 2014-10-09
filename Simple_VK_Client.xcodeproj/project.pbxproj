@@ -8,9 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		4D5384B92271497AA3EED2DA /* libPods-Simple_VK_Client.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A57473B154054BA880FF59C3 /* libPods-Simple_VK_Client.a */; settings = {ATTRIBUTES = (Required, ); }; };
-		64ADD40A19E27E8C00A7D9C8 /* NewsItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 64ADD40919E27E8C00A7D9C8 /* NewsItem.m */; };
 		64ADD40D19E50EFE00A7D9C8 /* DetailView.m in Sources */ = {isa = PBXBuildFile; fileRef = 64ADD40C19E50EFE00A7D9C8 /* DetailView.m */; };
 		64BBFB4A19E566B7005F4272 /* ImageCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 64BBFB4919E566B7005F4272 /* ImageCell.m */; };
+		64BBFB5919E6422E005F4272 /* NewsItem.m in Sources */ = {isa = PBXBuildFile; fileRef = 64BBFB5819E6422E005F4272 /* NewsItem.m */; };
+		64BBFB7119E678C4005F4272 /* DictionaryOfCachedImages.m in Sources */ = {isa = PBXBuildFile; fileRef = 64BBFB7019E678C4005F4272 /* DictionaryOfCachedImages.m */; };
 		64F7C2D619D940F000EC6FB9 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 64F7C2D519D940F000EC6FB9 /* main.m */; };
 		64F7C2D919D940F000EC6FB9 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 64F7C2D819D940F000EC6FB9 /* AppDelegate.m */; };
 		64F7C2DC19D940F000EC6FB9 /* Simple_VK_Client.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 64F7C2DA19D940F000EC6FB9 /* Simple_VK_Client.xcdatamodeld */; };
@@ -38,12 +39,14 @@
 
 /* Begin PBXFileReference section */
 		5EE2F12C3F62F8E781B55BDF /* Pods-Simple_VK_Client.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Simple_VK_Client.debug.xcconfig"; path = "Pods/Target Support Files/Pods-Simple_VK_Client/Pods-Simple_VK_Client.debug.xcconfig"; sourceTree = "<group>"; };
-		64ADD40819E27E8C00A7D9C8 /* NewsItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NewsItem.h; sourceTree = "<group>"; };
-		64ADD40919E27E8C00A7D9C8 /* NewsItem.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NewsItem.m; sourceTree = "<group>"; };
 		64ADD40B19E50EFE00A7D9C8 /* DetailView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DetailView.h; sourceTree = "<group>"; };
 		64ADD40C19E50EFE00A7D9C8 /* DetailView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DetailView.m; sourceTree = "<group>"; };
 		64BBFB4819E566B7005F4272 /* ImageCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImageCell.h; sourceTree = "<group>"; };
 		64BBFB4919E566B7005F4272 /* ImageCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ImageCell.m; sourceTree = "<group>"; };
+		64BBFB5719E6422E005F4272 /* NewsItem.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NewsItem.h; sourceTree = "<group>"; };
+		64BBFB5819E6422E005F4272 /* NewsItem.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NewsItem.m; sourceTree = "<group>"; };
+		64BBFB6F19E678C4005F4272 /* DictionaryOfCachedImages.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DictionaryOfCachedImages.h; sourceTree = "<group>"; };
+		64BBFB7019E678C4005F4272 /* DictionaryOfCachedImages.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DictionaryOfCachedImages.m; sourceTree = "<group>"; };
 		64F7C2D019D940F000EC6FB9 /* Simple_VK_Client.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Simple_VK_Client.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		64F7C2D419D940F000EC6FB9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		64F7C2D519D940F000EC6FB9 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -142,9 +145,11 @@
 				64F7C2DA19D940F000EC6FB9 /* Simple_VK_Client.xcdatamodeld */,
 				64F7C2D719D940F000EC6FB9 /* AppDelegate.h */,
 				64F7C2D819D940F000EC6FB9 /* AppDelegate.m */,
-				64ADD40819E27E8C00A7D9C8 /* NewsItem.h */,
-				64ADD40919E27E8C00A7D9C8 /* NewsItem.m */,
 				64F7C2D319D940F000EC6FB9 /* Supporting Files */,
+				64BBFB5719E6422E005F4272 /* NewsItem.h */,
+				64BBFB5819E6422E005F4272 /* NewsItem.m */,
+				64BBFB6F19E678C4005F4272 /* DictionaryOfCachedImages.h */,
+				64BBFB7019E678C4005F4272 /* DictionaryOfCachedImages.m */,
 			);
 			path = Simple_VK_Client;
 			sourceTree = "<group>";
@@ -347,13 +352,14 @@
 			files = (
 				64F7C2D919D940F000EC6FB9 /* AppDelegate.m in Sources */,
 				64BBFB4A19E566B7005F4272 /* ImageCell.m in Sources */,
-				64ADD40A19E27E8C00A7D9C8 /* NewsItem.m in Sources */,
 				64ADD40D19E50EFE00A7D9C8 /* DetailView.m in Sources */,
+				64BBFB5919E6422E005F4272 /* NewsItem.m in Sources */,
 				64F7C31519DBC4AF00EC6FB9 /* AuthorizationController.m in Sources */,
 				64F7C2D619D940F000EC6FB9 /* main.m in Sources */,
 				64F7C31A19DC0F8B00EC6FB9 /* NewsCell.m in Sources */,
 				64F7C30F19DA96FA00EC6FB9 /* NewsController.m in Sources */,
 				64F7C2DF19D940F000EC6FB9 /* LoginController.m in Sources */,
+				64BBFB7119E678C4005F4272 /* DictionaryOfCachedImages.m in Sources */,
 				64F7C2DC19D940F000EC6FB9 /* Simple_VK_Client.xcdatamodeld in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -19,7 +19,6 @@
 
 @property (weak, nonatomic) IBOutlet UIImageView *imageOfPostSender;
 @property (weak, nonatomic) IBOutlet UIImageView *imageOfPostOne;
-@property (weak, nonatomic) IBOutlet UIImageView *imageOfPostTwo;
 
 
 @end

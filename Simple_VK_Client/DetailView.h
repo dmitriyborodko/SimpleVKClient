@@ -22,6 +22,12 @@
 @property (weak, nonatomic) IBOutlet UIImageView *avatarOfPoster;
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
 
+@property NSMutableArray *arrayOfImages;
 @property BOOL isCellWithText;
 
 @end
+
+enum
+{
+    FONT_SIZE_OF_THE_TEXT_CELL = 15,
+};

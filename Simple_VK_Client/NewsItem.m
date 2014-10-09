@@ -2,7 +2,7 @@
 //  NewsItem.m
 //  Simple_VK_Client
 //
-//  Created by Dmitriy on 06/10/14.
+//  Created by Dmitriy on 09/10/14.
 //  Copyright (c) 2014 ALS. All rights reserved.
 //
 
@@ -13,12 +13,12 @@
 
 @dynamic date;
 @dynamic imageAvatar;
-@dynamic imagePostOne;
-@dynamic imagePostTwo;
 @dynamic likes;
 @dynamic name;
-@dynamic offset;
 @dynamic reposts;
 @dynamic text;
+@dynamic imagePostOne;
+@dynamic dataWithArrayOfImages;
+@dynamic imageURL;
 
 @end

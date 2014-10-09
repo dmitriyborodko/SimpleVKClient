@@ -25,16 +25,26 @@
     self.refreshControl = [[UIRefreshControl alloc] init];
     [self.refreshControl addTarget:self action:@selector(refreshInvoked:forState:) forControlEvents:UIControlEventValueChanged];
     
-    self.tableView.bottomRefreshControl = [[UIRefreshControl alloc] init];
-    [self.tableView.bottomRefreshControl addTarget:self action:@selector(loadNewPosts) forControlEvents:UIControlEventValueChanged];
+//    self.tableView.bottomRefreshControl = [[UIRefreshControl alloc] init];
+//    [self.tableView.bottomRefreshControl addTarget:self action:@selector(loadNewPosts) forControlEvents:UIControlEventValueChanged];
     
     self.arrayOfIndexPathesOfCellsWithImages = [[NSMutableArray alloc] init];
     
-    id <NSFetchedResultsSectionInfo> sectionInfo = [self.fetchedResultsController sections][0];
-    NSLog(@"%lu", (unsigned long)[sectionInfo numberOfObjects]);
-    //refresh bottom
-
+    self.imageDictionaryOfURLs = [[NSMutableDictionary alloc] init];
+    [self loadImagesFromCacheWithRefresh:NO];
+    
+    //bottom pull to refresh view
+//    UIView* footerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 320, 50)];
+////    UILabel *label
+//    UIActivityIndicatorView *activityIndicatorBottom = [[UIActivityIndicatorView alloc] initWithFrame:CGRectMake(self.tableView.center.x - 25, 0, 50, 50)];
+//    UILabel *pullToRefreshLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 150, 50)];
+//    [pullToRefreshLabel setText:@"pull to refresh"];
+//    [footerView addSubview:activityIndicatorBottom];
+//    [footerView addSubview:pullToRefreshLabel];
+////    [footerView setBackgroundColor:[UIColor redColor]];
+//    self.tableView.tableFooterView = footerView;
 }
+
 
 - (IBAction)exitButton:(id)sender{
     [self.requestOprationManager GET:@"http://api.vk.com/oauth/logout" parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
@@ -88,16 +98,14 @@
 }
 
 
-//- (void)scrollViewDidScroll:(UIScrollView *)scrollView
-//{
-//    if ((scrollView.contentOffset.y + scrollView.frame.size.height - 100) >= scrollView.contentSize.height)
-//    {
-//        NSLog(@"yup");
-//        UIView* footerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 320, 50)];
-//        [footerView setBackgroundColor:[UIColor colorWithPatternImage:[UIImage imageNamed:@"Like.png"]]];
-//        self.tableView.tableFooterView = footerView;
-//    }
-//}
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView
+{
+    if ((scrollView.contentOffset.y + scrollView.frame.size.height - 150) >= scrollView.contentSize.height)
+    {
+        NSLog(@"pull to refresh act");
+        [self loadNewPosts];
+    }
+}
 
 
 #pragma mark - Networking
@@ -109,10 +117,11 @@
     NSString *URLString = @"https://api.vk.com/method/newsfeed.get";
     NSMutableDictionary *parameters = [[NSMutableDictionary alloc] init];
         [parameters setObject:@"post" forKey:@"filters"];
-        [parameters setObject:@(NUMBER_OF_NEWS_PER_LOAD_TWO) forKey:@"count"];
+        [parameters setObject:@(NUMBER_OF_NEWS_PER_LOAD) forKey:@"count"];
         [parameters setObject:userID forKey:@"owner_id"];
         [parameters setObject:accessToken forKey:@"access_token"];
-    if (self.isRefreshing) {
+    if (!self.isRefreshing) {
+        //continue news
         id <NSFetchedResultsSectionInfo> sectionInfo = [self.fetchedResultsController sections][0];
         NSString *offset = [NSString stringWithFormat:@"%li",  (unsigned long)[sectionInfo numberOfObjects]];
         [parameters setObject:offset forKey:@"offset"];
@@ -120,12 +129,12 @@
     
     //     News in JSON
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        /* Код, который должен выполниться в фоне */
         [self.requestOprationManager GET:URLString parameters:parameters success:^(AFHTTPRequestOperation *operation, NSMutableDictionary *responseObject) {
-                    NSLog(@"JSON: %@", responseObject);
-            NSLog(@"rquestd DONE");
+//                    NSLog(@"JSON: %@", responseObject);
+            NSLog(@"request DONE");
             self.responseDictionary = responseObject;
             [self saveNewsItemToCoreData:responseObject];
+            self.isRefreshing = NO;
             successBlock();
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             NSLog(@"Error: %@", error);
@@ -150,9 +159,13 @@
     for (NSManagedObject * newsItem in arrayOfInstances) {
         [self.managedObjectContext deleteObject:newsItem];
     }
-    NSError *saveError = nil;
-    [self.managedObjectContext save:&saveError];
-    self.isRefreshing = NO;
+    
+    NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] init];
+    [fetchRequest setEntity:[NSEntityDescription entityForName:@"DictionaryOfCachedImages" inManagedObjectContext:self.managedObjectContext]];
+    NSArray *dictionaryArrayOfOne = [self.managedObjectContext executeFetchRequest:fetchRequest error:nil];
+    for (DictionaryOfCachedImages *item in dictionaryArrayOfOne) {
+        [self.managedObjectContext deleteObject:item];
+    }
 }
 
 -(void)saveNewsItemToCoreData:(NSMutableDictionary*)responseObject{
@@ -161,8 +174,9 @@
         NSError *error;
         [self.managedObjectContext save:&error];
         if (error) {
-            NSLog(@"%@", error);
+//            NSLog(@"%@", error);
         }
+        self.imageDictionaryOfURLs = [[NSMutableDictionary alloc] init];
     }
     for (NSDictionary *itemDictionary in (NSArray*)[[responseObject objectForKey:@"response"] objectForKey:@"items"]) {
         NSString *postSenderID = [itemDictionary objectForKey:@"source_id"];
@@ -179,20 +193,19 @@
             newsItem.text =[itemDictionary objectForKey:@"text"];
         }
         
-        //Image
+        //Image for preview
         if ([[[itemDictionary objectForKey:@"attachment"] objectForKey:@"type"]  isEqual: @"photo"]) {
             NSURL *urlForImageOneBig = [NSURL URLWithString:[[[itemDictionary objectForKey:@"attachment"] objectForKey:@"photo"] objectForKey:@"src_big"]];
             NSURL *urlForImageOne = [NSURL URLWithString:[[[itemDictionary objectForKey:@"attachment"] objectForKey:@"photo"] objectForKey:@"src"]];
             if (urlForImageOneBig) {
-                UIImage *imageOneBig = [[UIImage alloc] initWithData:[NSData dataWithContentsOfURL:urlForImageOneBig]];
-                newsItem.imagePostOne = UIImageJPEGRepresentation([self imageWithImage:imageOneBig scaledToSize:CGSizeMake(260, 260)], 1);
+                newsItem.imageURL = [urlForImageOneBig absoluteString];
             } else {
-                UIImage *imageOne = [[UIImage alloc] initWithData:[NSData dataWithContentsOfURL:urlForImageOne]];
-                newsItem.imagePostOne = UIImageJPEGRepresentation([self imageWithImage:imageOne scaledToSize:CGSizeMake(260, 260)], 1);
+                newsItem.imageURL = [urlForImageOne absoluteString];
             }
+            UIImage *imageOne = [[UIImage alloc] initWithData:[NSData dataWithContentsOfURL:[NSURL URLWithString:newsItem.imageURL]]];
+            [self.imageDictionaryOfURLs setObject:imageOne forKey:newsItem.imageURL];
         }
         
-        //Записать Короч то що надо
         //More images
         NSMutableArray *arrayOfImages = [[NSMutableArray alloc] init];
         for (NSDictionary *attachmentItem in [itemDictionary objectForKey:@"attachments"]) {
@@ -201,14 +214,14 @@
                 NSURL *urlForImageBig = [NSURL URLWithString:[[attachmentItem objectForKey:@"photo"] objectForKey:@"src_big"]];
                 NSURL *urlForImage = [NSURL URLWithString:[[attachmentItem objectForKey:@"photo"] objectForKey:@"src"]];
                 if (urlForImageBig) {
-                    UIImage *imageBig = [[UIImage alloc] initWithData:[NSData dataWithContentsOfURL:urlForImageBig]];
-                    newsItem.imagePostOne = UIImageJPEGRepresentation([self imageWithImage:imageBig scaledToSize:CGSizeMake(260, 260)], 1);
+                    [arrayOfImages addObject:urlForImageBig];
                 } else {
-                    UIImage *image = [[UIImage alloc] initWithData:[NSData dataWithContentsOfURL:urlForImage]];
-                    newsItem.imagePostOne = UIImageJPEGRepresentation([self imageWithImage:image scaledToSize:CGSizeMake(260, 260)], 1);
+                    [arrayOfImages addObject:urlForImage];
                 }
             }
         }
+        NSData *arrayData = [NSKeyedArchiver archivedDataWithRootObject:arrayOfImages];
+        newsItem.dataWithArrayOfImages = arrayData;
      
         //Likes
         newsItem.likes =[[[itemDictionary objectForKey:@"likes"] objectForKey:@"count"] stringValue];
@@ -251,7 +264,10 @@
         }
     }
     self.responseDictionary = [[NSMutableDictionary alloc] init];
-    self.isRefreshing = NO;
+    if (self.isRefreshing) {
+        [self saveImageCache];
+    }
+//    [self loadImagesFromCacheWithRefresh:YES];
 }
 
 -(void)loadNewsFromCoreDataForCell:(NewsCell*)cell OnIndexPath:(NSIndexPath*)indexPath{
@@ -283,10 +299,10 @@
         [cell.textOfPost setText:newsItemFromCoreData.text];
     }
     
-    //Image One
-    UIImage *imageOne = [[UIImage alloc] initWithData:newsItemFromCoreData.imagePostOne];
-    [cell.imageOfPostOne setImage:imageOne];
-    if (imageOne) {
+    //Image preview
+    UIImage *imagePreview = [self.imageDictionaryOfURLs objectForKey:newsItemFromCoreData.imageURL];
+    [cell.imageOfPostOne setImage:imagePreview];
+    if (imagePreview) {
         [self.arrayOfIndexPathesOfCellsWithImages addObject:indexPath];
     }
     
@@ -297,10 +313,36 @@
     [cell.repostsOfPost setText:newsItemFromCoreData.reposts];
 }
 
+-(void)loadImagesFromCacheWithRefresh:(BOOL)refresh{
+    //    Load images from cache
+    NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"DictionaryOfCachedImages"];
+//    NSEntityDescription *entity = [NSEntityDescription entityForName:@"DictionaryOfCachedImages" inManagedObjectContext:self.managedObjectContext];
+//    [fetchRequest setEntity:entity];
+    NSError *error = nil;
+    NSArray *dictionaryArrayOfOne = [self.managedObjectContext executeFetchRequest:fetchRequest error:&error];
+    if ([dictionaryArrayOfOne firstObject] == nil) {
+        NSLog(@"Trouble with reading image cache");
+    }
+    DictionaryOfCachedImages *dictionaryOfImages = [dictionaryArrayOfOne firstObject];
+    
+    for (NewsItem *newsItem in self.fetchedResultsController.fetchedObjects) {
+        if (newsItem.imageURL) {
+            //Тут надо картинку брать не из сети, а из другой энтити, в которую я буду записывать в другом методе!!! Каждый раз когда я обновляю - нужно переписывать кэш.
+//            UIImage *imageOne = [[UIImage alloc] initWithData:[NSData dataWithContentsOfURL:[NSURL URLWithString:newsItem.imageURL]]];
+            self.imageDictionaryOfURLs = (NSMutableDictionary*) [NSKeyedUnarchiver unarchiveObjectWithData:dictionaryOfImages.dictionary];
+//            UIImage *image = [[UIImage alloc] initWithData:[NSData dataWithContentsOfURL:[NSURL URLWithString:newsItem.imageURL]]];
+//            if (imageOne) {
+//                [self.imageDictionaryOfURLs setObject:imageOne forKey:newsItem.imageURL];
+//            }
+        }
+    }
+}
 
-
-
-
+-(void)saveImageCache{
+    DictionaryOfCachedImages *dictionaryOfCachedImages = [NSEntityDescription insertNewObjectForEntityForName:@"DictionaryOfCachedImages" inManagedObjectContext:self.managedObjectContext];
+    dictionaryOfCachedImages.dictionary = [NSKeyedArchiver archivedDataWithRootObject:self.imageDictionaryOfURLs];
+    [self.managedObjectContext save:nil];
+}
 
 
 - (void)refreshInvoked:(id)sender forState:(UIControlState)state {
@@ -314,19 +356,24 @@
     };
         self.isRefreshing = YES;
         [self getNewsFromVKWithSuccessBlock:blockToExecuteWhenResponseRecieved andFailureBlock:blockToExecuteWhenResponseFailed];
-    
 }
 
 - (void)loadNewPosts {
     SuccessLoadBlock blockToExecuteWhenResponseRecieved = ^(void){
         [self.tableView addSubview:self.tableView.bottomRefreshControl];
         [self.tableView.bottomRefreshControl endRefreshing];
+        self.isLoading = NO;
     };
     FailureLoadBlock blockToExecuteWhenResponseFailed = ^(void){
         [self.tableView addSubview:self.tableView.bottomRefreshControl];
         [self.tableView.bottomRefreshControl endRefreshing];
+        self.isLoading = NO;
     };
-    [self getNewsFromVKWithSuccessBlock:blockToExecuteWhenResponseRecieved andFailureBlock:blockToExecuteWhenResponseFailed];
+    self.isRefreshing = NO;
+    if (!self.isLoading) {
+        self.isLoading = YES;
+        [self getNewsFromVKWithSuccessBlock:blockToExecuteWhenResponseRecieved andFailureBlock:blockToExecuteWhenResponseFailed];
+    }
 }
 
 
@@ -385,7 +432,6 @@
 }
 
 
-
 #pragma mark - Fetched results controller
 
 - (NSFetchedResultsController *)fetchedResultsController{
@@ -437,6 +483,7 @@
 }
 
 - (void)controllerDidChangeContent:(NSFetchedResultsController *)controller{
+//    [self.tableView reloadData];
     [self.tableView endUpdates];
 }
 

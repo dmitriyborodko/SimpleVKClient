@@ -11,8 +11,7 @@
 #import <CoreData/CoreData.h>
 #import <CCBottomRefreshControl/UIScrollView+BottomRefreshControl.h>
 #import "DetailView.h"
-
-//#define NewsItemString @"NewsItem";
+#import "DictionaryOfCachedImages.h"
 
 @interface NewsController : UITableViewController <NSFetchedResultsControllerDelegate, UIScrollViewDelegate>
 
@@ -22,11 +21,10 @@
 @property NSMutableArray *arrayOfIndexPathesOfCellsWithImages;
 @property NSMutableDictionary *responseDictionary;
 @property BOOL isRefreshing;
-
+@property NSMutableDictionary *imageDictionaryOfURLs;
+@property BOOL isLoading;
 
 - (IBAction)exitButton:(id)sender;
-
-
 
 @end
 
@@ -35,5 +33,5 @@ typedef void (^ FailureLoadBlock)(void);
 
 enum
 {
-    NUMBER_OF_NEWS_PER_LOAD_TWO = 2,
+    NUMBER_OF_NEWS_PER_LOAD = 5,
 };

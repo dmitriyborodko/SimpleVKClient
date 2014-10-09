@@ -20,8 +20,17 @@
     if (self.detailItem.text) {
         self.isCellWithText = YES;
     }
-    
     [self configureView];
+    
+    //Load Images
+    self.arrayOfImages = [[NSMutableArray alloc] init];
+    NSMutableArray *arrayWithImageURLs = [[NSMutableArray alloc] initWithArray:[NSKeyedUnarchiver unarchiveObjectWithData:self.detailItem.dataWithArrayOfImages]];
+    for (NSURL *imageURL in arrayWithImageURLs) {
+        UIImage *image = [[UIImage alloc] initWithData:[NSData dataWithContentsOfURL:imageURL]];
+        if (image) {
+            [self.arrayOfImages addObject:image];
+        }
+    }
 }
 
 - (void)didReceiveMemoryWarning {
@@ -52,51 +61,61 @@
 }
 
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
-    return 2;
+    if (self.isCellWithText) {
+        return 1 + [self.arrayOfImages count];
+    } else {
+        return [self.arrayOfImages count];
+    }
 }
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath{
     if (self.isCellWithText) {
         if (indexPath.row == 0) {
-            NSString *label =  @"Sample String to get the Size for the textView Will definitely work ";
-            CGSize stringSize = [self.detailItem.text sizeWithFont:[UIFont boldSystemFontOfSize:17]
+            // Text
+            CGSize stringSize = [self.detailItem.text sizeWithFont:[UIFont systemFontOfSize:FONT_SIZE_OF_THE_TEXT_CELL + 1]
                                   constrainedToSize:CGSizeMake(tableView.frame.size.width, MAXFLOAT)
                                       lineBreakMode:NSLineBreakByWordWrapping];
+//            CGRect stringSize = [self.detailItem.text boundingRectWithSize:CGSizeMake(tableView.frame.size.width, MAXFLOAT) options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:[UIFont boldSystemFontOfSize:FONT_SIZE_OF_THE_TEXT_CELL]} context:nil];
             NSLog(@"%f",stringSize.height);
-
-            UITextView *textView=[[UITextView alloc] initWithFrame:CGRectMake(5, 5, tableView.frame.size.width, stringSize.height+10)];
-            textView.font = [UIFont systemFontOfSize:15.0];
+            UITextView *textView=[[UITextView alloc] initWithFrame:CGRectMake(5, 5, tableView.frame.size.width, stringSize.height + 15)];
+            textView.font = [UIFont systemFontOfSize:FONT_SIZE_OF_THE_TEXT_CELL];
             textView.text = self.detailItem.text;
             textView.textColor = [UIColor blackColor];
             textView.editable = NO;
             UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"textCell" forIndexPath:indexPath];
+            [cell.textLabel setFont:[UIFont boldSystemFontOfSize:FONT_SIZE_OF_THE_TEXT_CELL]];
             [cell.contentView addSubview:textView];
-            
             return cell;
             
-//            UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"textCell" forIndexPath:indexPath];
-//            cell.textLabel.text = self.detailItem.text;
-//            return cell;
         } else {
-            //Avatar
+            //Images
             ImageCell *cell = [tableView dequeueReusableCellWithIdentifier:@"imageCell" forIndexPath:indexPath];
-            UIImage *imageAvatar = [[UIImage alloc] initWithData:self.detailItem.imageAvatar];
-            [cell.imageInCell setImage:imageAvatar];
+            [cell.imageInCell setImage:[self.arrayOfImages objectAtIndex:indexPath.row - 1]];
             return cell;
         }
+    } else {
+        //Images
+        ImageCell *cell = [tableView dequeueReusableCellWithIdentifier:@"imageCell" forIndexPath:indexPath];
+        [cell.imageInCell setImage:[self.arrayOfImages objectAtIndex:indexPath.row]];
+        return cell;
     }
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"textCell" forIndexPath:indexPath];
-    return cell;
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
-    if (self.isCellWithText && indexPath.row == 0) {
-        CGSize stringSize = [self.detailItem.text sizeWithFont:[UIFont boldSystemFontOfSize:15]
-                                             constrainedToSize:CGSizeMake(tableView.frame.size.width, MAXFLOAT)
-                                                 lineBreakMode:NSLineBreakByWordWrapping];
-        return stringSize.height+25;
+    if (self.isCellWithText) {
+        if (indexPath.row == 0) {
+            CGSize stringSize = [self.detailItem.text sizeWithFont:[UIFont systemFontOfSize:FONT_SIZE_OF_THE_TEXT_CELL + 1]
+                                                 constrainedToSize:CGSizeMake(tableView.frame.size.width, MAXFLOAT)
+                                                     lineBreakMode:NSLineBreakByWordWrapping];
+//            CGRect stringSize = [self.detailItem.text boundingRectWithSize:CGSizeMake(tableView.frame.size.width, MAXFLOAT) options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:[UIFont boldSystemFontOfSize:FONT_SIZE_OF_THE_TEXT_CELL]} context:nil];
+            return stringSize.height + 25;
+        } else {
+            UIImage *imageToSizeCell = [self.arrayOfImages objectAtIndex:indexPath.row - 1];
+            return imageToSizeCell.size.height;
+        }
     } else {
-        return 200;
+        UIImage *imageToSizeCell = [self.arrayOfImages objectAtIndex:indexPath.row];
+        return imageToSizeCell.size.height;
     }
 }
 
