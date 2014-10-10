@@ -9,7 +9,6 @@
 #import <UIKit/UIKit.h>
 #import <AFNetworking/AFNetworking.h>
 #import <CoreData/CoreData.h>
-#import <CCBottomRefreshControl/UIScrollView+BottomRefreshControl.h>
 #import "DetailView.h"
 #import "DictionaryOfCachedImages.h"
 

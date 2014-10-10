@@ -193,8 +193,10 @@
             } else {
                 newsItem.imageURL = [urlForImageOne absoluteString];
             }
-            UIImage *imageOne = [[UIImage alloc] initWithData:[NSData dataWithContentsOfURL:[NSURL URLWithString:newsItem.imageURL]]];
-            [self.imageDictionaryOfURLs setObject:imageOne forKey:newsItem.imageURL];
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                UIImage *imageOne = [[UIImage alloc] initWithData:[NSData dataWithContentsOfURL:[NSURL URLWithString:newsItem.imageURL]]];
+                [self.imageDictionaryOfURLs setObject:imageOne forKey:newsItem.imageURL];
+            });
         }
         
         //More images
@@ -289,6 +291,9 @@
     }
     
     //Image preview
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        
+    });
     UIImage *imagePreview = [self.imageDictionaryOfURLs objectForKey:newsItemFromCoreData.imageURL];
     [cell.imageOfPostOne setImage:imagePreview];
     if (imagePreview) {
@@ -349,7 +354,7 @@
         [self.tableView.bottomRefreshControl endRefreshing];
     };
 //    self.isRefreshing = NO;
-    if (!self.isLoading) {
+    if (!self.isLoading && self.isRefreshing) {
         self.isLoading = YES;
         [self getNewsFromVKWithSuccessBlock:blockToExecuteWhenResponseRecieved andFailureBlock:blockToExecuteWhenResponseFailed];
     }

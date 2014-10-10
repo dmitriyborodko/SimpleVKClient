@@ -5,8 +5,6 @@ source 'https://github.com/CocoaPods/Specs.git'
 target "Simple_VK_Client" do
 
 pod "AFNetworking", "~> 2.0"
-pod "CCBottomRefreshControl"
-
 
 end
 
