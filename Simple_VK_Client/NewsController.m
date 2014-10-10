@@ -45,6 +45,8 @@
 }
 
 - (IBAction)exitButton:(id)sender{
+    
+    
     [self.requestOprationManager GET:@"http://api.vk.com/oauth/logout" parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
         NSLog(@"JSON: %@", responseObject);
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
@@ -65,6 +67,10 @@
             [storage deleteCookie:cookie];
         }
     }
+    
+    self.isRefreshing = YES;
+    self.isLoading = YES;
+    [self deleteAllInstancesFromCoreData];
     
     [self.navigationController popToRootViewControllerAnimated:YES];
     
@@ -121,7 +127,7 @@
     //     News in JSON
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         [self.requestOprationManager GET:URLString parameters:parameters success:^(AFHTTPRequestOperation *operation, NSMutableDictionary *responseObject) {
-                    NSLog(@"JSON: %@", responseObject);
+//                    NSLog(@"JSON: %@", responseObject);
             NSLog(@"request DONE");
             self.responseDictionary = responseObject;
             [self saveNewsItemToCoreData:responseObject];
@@ -346,15 +352,13 @@
 
 - (void)loadNewPosts {
     SuccessLoadBlock blockToExecuteWhenResponseRecieved = ^(void){
-        [self.tableView addSubview:self.tableView.bottomRefreshControl];
-        [self.tableView.bottomRefreshControl endRefreshing];
+        //NSLog(@"executed");
     };
     FailureLoadBlock blockToExecuteWhenResponseFailed = ^(void){
-        [self.tableView addSubview:self.tableView.bottomRefreshControl];
-        [self.tableView.bottomRefreshControl endRefreshing];
+        //NSLog(@" not executed");
     };
 //    self.isRefreshing = NO;
-    if (!self.isLoading && self.isRefreshing) {
+    if (!self.isLoading && !self.isRefreshing) {
         self.isLoading = YES;
         [self getNewsFromVKWithSuccessBlock:blockToExecuteWhenResponseRecieved andFailureBlock:blockToExecuteWhenResponseFailed];
     }
