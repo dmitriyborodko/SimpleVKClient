@@ -16,12 +16,7 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [self.navigationItem setHidesBackButton:YES];
-}
-
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
+    [self.navigationItem setHidesBackButton:YES]; 
 }
 
 -(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender{

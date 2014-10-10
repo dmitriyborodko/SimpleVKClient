@@ -28,16 +28,6 @@
     [self.webView loadRequest:nsrequest];
 }
 
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
-}
-
-//-(void)webViewDidStartLoad:(UIWebView *)webView{
-//    UIActivityIndicatorView *activityIndicator = [[UIActivityIndicatorView alloc] initWithFrame:CGRectMake(self.view.center.x, self.view.center.y, 20.0f, 20.0f)];
-//    [activityIndicator ]
-//}
-
 -(void)webViewDidFinishLoad:(UIWebView *)webView {
     if ([self.webView.request.URL.absoluteString rangeOfString:@"access_token"].location != NSNotFound) {
         NSString *accessToken = [self stringBetweenString:@"access_token="
@@ -78,14 +68,5 @@
     }
     return nil;
 }
-/*
-#pragma mark - Navigation
-
-// In a storyboard-based application, you will often want to do a little preparation before navigation
-- (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-    // Get the new view controller using [segue destinationViewController].
-    // Pass the selected object to the new view controller.
-}
-*/
 
 @end

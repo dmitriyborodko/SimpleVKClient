@@ -19,40 +19,35 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.requestOprationManager = [AFHTTPRequestOperationManager manager];
-    self.navigationItem.hidesBackButton = YES;
     self.navigationController.navigationItem.hidesBackButton = YES;
     
     self.refreshControl = [[UIRefreshControl alloc] init];
     [self.refreshControl addTarget:self action:@selector(refreshInvoked:forState:) forControlEvents:UIControlEventValueChanged];
-    
-//    self.tableView.bottomRefreshControl = [[UIRefreshControl alloc] init];
-//    [self.tableView.bottomRefreshControl addTarget:self action:@selector(loadNewPosts) forControlEvents:UIControlEventValueChanged];
     
     self.arrayOfIndexPathesOfCellsWithImages = [[NSMutableArray alloc] init];
     
     self.imageDictionaryOfURLs = [[NSMutableDictionary alloc] init];
     [self loadImagesFromCacheWithRefresh:NO];
     
-    //bottom pull to refresh view
-//    UIView* footerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 320, 50)];
-////    UILabel *label
-//    UIActivityIndicatorView *activityIndicatorBottom = [[UIActivityIndicatorView alloc] initWithFrame:CGRectMake(self.tableView.center.x - 25, 0, 50, 50)];
-//    UILabel *pullToRefreshLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 150, 50)];
-//    [pullToRefreshLabel setText:@"pull to refresh"];
-//    [footerView addSubview:activityIndicatorBottom];
-//    [footerView addSubview:pullToRefreshLabel];
-////    [footerView setBackgroundColor:[UIColor redColor]];
-//    self.tableView.tableFooterView = footerView;
+    self.isLoading = YES;
 }
 
+-(void)viewDidAppear:(BOOL)animated{
+    NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"DictionaryOfCachedImages"];
+    NSError *error = nil;
+    NSArray *dictionaryArrayOfOne = [self.managedObjectContext executeFetchRequest:fetchRequest error:&error];
+    if ([dictionaryArrayOfOne firstObject]) {
+        DictionaryOfCachedImages *dictionaryOfImages = [dictionaryArrayOfOne firstObject];
+        self.fromLoadString = dictionaryOfImages.from;
+        
+        self.isLoading = NO;
+    }
+}
 
 - (IBAction)exitButton:(id)sender{
     [self.requestOprationManager GET:@"http://api.vk.com/oauth/logout" parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
         NSLog(@"JSON: %@", responseObject);
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        NSLog(@"Error: %@", error);
-        UIAlertView *alertError = [[UIAlertView alloc] initWithTitle:@"Connection error" message:[error description] delegate:nil cancelButtonTitle:nil otherButtonTitles:nil, nil];
-        [alertError show];
     }];
     
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"VKAccessUserId"];
@@ -70,8 +65,6 @@
             [storage deleteCookie:cookie];
         }
     }
-    UIAlertView *exitCompleteAlert = [[UIAlertView alloc] initWithTitle:@"Run, pussy, run" message:nil delegate:nil cancelButtonTitle:@"Okay" otherButtonTitles:nil, nil];
-    [exitCompleteAlert show];
     
     [self.navigationController popToRootViewControllerAnimated:YES];
     
@@ -122,20 +115,19 @@
         [parameters setObject:accessToken forKey:@"access_token"];
     if (!self.isRefreshing) {
         //continue news
-        id <NSFetchedResultsSectionInfo> sectionInfo = [self.fetchedResultsController sections][0];
-        NSString *offset = [NSString stringWithFormat:@"%li",  (unsigned long)[sectionInfo numberOfObjects]];
-        [parameters setObject:offset forKey:@"offset"];
+        [parameters setObject:self.fromLoadString forKey:@"from"];
     }
     
     //     News in JSON
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         [self.requestOprationManager GET:URLString parameters:parameters success:^(AFHTTPRequestOperation *operation, NSMutableDictionary *responseObject) {
-//                    NSLog(@"JSON: %@", responseObject);
+                    NSLog(@"JSON: %@", responseObject);
             NSLog(@"request DONE");
             self.responseDictionary = responseObject;
             [self saveNewsItemToCoreData:responseObject];
             self.isRefreshing = NO;
             successBlock();
+            
         } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
             NSLog(@"Error: %@", error);
             failureBlock();
@@ -143,7 +135,6 @@
             [alertError show];
         }];
     });
-    
 }
 
 -(void)deleteAllInstancesFromCoreData{
@@ -224,11 +215,10 @@
         newsItem.dataWithArrayOfImages = arrayData;
      
         //Likes
-        newsItem.likes =[[[itemDictionary objectForKey:@"likes"] objectForKey:@"count"] stringValue];
+        newsItem.likes = [[[itemDictionary objectForKey:@"likes"] objectForKey:@"count"] stringValue];
         
         //Reposts
-        newsItem.reposts =[[[itemDictionary objectForKey:@"reposts"] objectForKey:@"count"] stringValue];
-        
+        newsItem.reposts = [[[itemDictionary objectForKey:@"reposts"] objectForKey:@"count"] stringValue];
         
         if ([postSenderID integerValue] > 0) {
             for (NSDictionary *profile in [[responseObject objectForKey:@"response"] objectForKey:@"profiles"]) {
@@ -244,7 +234,6 @@
             }
         } else {
             //delete minus before postSenderID
-            //            NSLog(@"%@", postSenderID);
             long long convertToPositiveLongLongValue = [postSenderID longLongValue];
             convertToPositiveLongLongValue = convertToPositiveLongLongValue * (-1);
             NSString *postSenderIDPositive = [NSString stringWithFormat:@"%lld", convertToPositiveLongLongValue];
@@ -263,16 +252,16 @@
             }
         }
     }
+    //From (to load from that post)
+    self.fromLoadString = [[responseObject objectForKey:@"response"] objectForKey:@"new_from"];
+    
     self.responseDictionary = [[NSMutableDictionary alloc] init];
     if (self.isRefreshing) {
         [self saveImageCache];
     }
-//    [self loadImagesFromCacheWithRefresh:YES];
 }
 
 -(void)loadNewsFromCoreDataForCell:(NewsCell*)cell OnIndexPath:(NSIndexPath*)indexPath{
-//    NSError *error = nil;
-//    NewsItem *newsItemFromCoreData = [[self.managedObjectContext executeFetchRequest:[self.fetchedResultsController fetchRequest] error:&error] objectAtIndex:indexPath.row];
     NewsItem *newsItemFromCoreData = [self.fetchedResultsController objectAtIndexPath:indexPath];
     
     //Name
@@ -313,37 +302,29 @@
     [cell.repostsOfPost setText:newsItemFromCoreData.reposts];
 }
 
+-(void)saveImageCache{
+    DictionaryOfCachedImages *dictionaryOfCachedImages = [NSEntityDescription insertNewObjectForEntityForName:@"DictionaryOfCachedImages" inManagedObjectContext:self.managedObjectContext];
+    dictionaryOfCachedImages.dictionary = [NSKeyedArchiver archivedDataWithRootObject:self.imageDictionaryOfURLs];
+    dictionaryOfCachedImages.from = self.fromLoadString;
+    [self.managedObjectContext save:nil];
+}
+
 -(void)loadImagesFromCacheWithRefresh:(BOOL)refresh{
     //    Load images from cache
     NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"DictionaryOfCachedImages"];
-//    NSEntityDescription *entity = [NSEntityDescription entityForName:@"DictionaryOfCachedImages" inManagedObjectContext:self.managedObjectContext];
-//    [fetchRequest setEntity:entity];
     NSError *error = nil;
     NSArray *dictionaryArrayOfOne = [self.managedObjectContext executeFetchRequest:fetchRequest error:&error];
-    if ([dictionaryArrayOfOne firstObject] == nil) {
+    if (![dictionaryArrayOfOne firstObject]) {
         NSLog(@"Trouble with reading image cache");
     }
     DictionaryOfCachedImages *dictionaryOfImages = [dictionaryArrayOfOne firstObject];
     
     for (NewsItem *newsItem in self.fetchedResultsController.fetchedObjects) {
         if (newsItem.imageURL) {
-            //Тут надо картинку брать не из сети, а из другой энтити, в которую я буду записывать в другом методе!!! Каждый раз когда я обновляю - нужно переписывать кэш.
-//            UIImage *imageOne = [[UIImage alloc] initWithData:[NSData dataWithContentsOfURL:[NSURL URLWithString:newsItem.imageURL]]];
             self.imageDictionaryOfURLs = (NSMutableDictionary*) [NSKeyedUnarchiver unarchiveObjectWithData:dictionaryOfImages.dictionary];
-//            UIImage *image = [[UIImage alloc] initWithData:[NSData dataWithContentsOfURL:[NSURL URLWithString:newsItem.imageURL]]];
-//            if (imageOne) {
-//                [self.imageDictionaryOfURLs setObject:imageOne forKey:newsItem.imageURL];
-//            }
         }
     }
 }
-
--(void)saveImageCache{
-    DictionaryOfCachedImages *dictionaryOfCachedImages = [NSEntityDescription insertNewObjectForEntityForName:@"DictionaryOfCachedImages" inManagedObjectContext:self.managedObjectContext];
-    dictionaryOfCachedImages.dictionary = [NSKeyedArchiver archivedDataWithRootObject:self.imageDictionaryOfURLs];
-    [self.managedObjectContext save:nil];
-}
-
 
 - (void)refreshInvoked:(id)sender forState:(UIControlState)state {
     SuccessLoadBlock blockToExecuteWhenResponseRecieved = ^(void){
@@ -362,43 +343,21 @@
     SuccessLoadBlock blockToExecuteWhenResponseRecieved = ^(void){
         [self.tableView addSubview:self.tableView.bottomRefreshControl];
         [self.tableView.bottomRefreshControl endRefreshing];
-        self.isLoading = NO;
     };
     FailureLoadBlock blockToExecuteWhenResponseFailed = ^(void){
         [self.tableView addSubview:self.tableView.bottomRefreshControl];
         [self.tableView.bottomRefreshControl endRefreshing];
-        self.isLoading = NO;
     };
-    self.isRefreshing = NO;
+//    self.isRefreshing = NO;
     if (!self.isLoading) {
         self.isLoading = YES;
         [self getNewsFromVKWithSuccessBlock:blockToExecuteWhenResponseRecieved andFailureBlock:blockToExecuteWhenResponseFailed];
     }
 }
 
-
-//- (void)scrollViewDidScroll:(UIScrollView *)scrollView
-//{
-//    if ((scrollView.contentOffset.y + scrollView.frame.size.height) >= scrollView.contentSize.height)
-//    {
-//        if (!self.isLoadingMoreData)
-//        {
-//            self.loadingMoreData = YES;
-//            
-//            // proceed with the loading of more data
-//        }
-//    }
-//}
-
 #pragma mark - Table view
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-//    if (self.responseDictionary) {
-//        NSInteger howManyItemsInRequest = [(NSArray*)[[self.responseDictionary objectForKey:@"response"] objectForKey:@"items"] count];
-//        
-//        return howManyItemsInRequest;
-//    }
-    
     id <NSFetchedResultsSectionInfo> sectionInfo = [self.fetchedResultsController sections][section];
     return [sectionInfo numberOfObjects];
 }
@@ -483,8 +442,8 @@
 }
 
 - (void)controllerDidChangeContent:(NSFetchedResultsController *)controller{
-//    [self.tableView reloadData];
     [self.tableView endUpdates];
+    self.isLoading = NO;
 }
 
 @end

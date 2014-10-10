@@ -2,7 +2,7 @@
 //  DictionaryOfCachedImages.m
 //  Simple_VK_Client
 //
-//  Created by Dmitriy on 09/10/14.
+//  Created by Dmitriy on 10/10/14.
 //  Copyright (c) 2014 ALS. All rights reserved.
 //
 
@@ -12,5 +12,6 @@
 @implementation DictionaryOfCachedImages
 
 @dynamic dictionary;
+@dynamic from;
 
 @end

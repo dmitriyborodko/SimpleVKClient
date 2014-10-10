@@ -23,6 +23,7 @@
 @property BOOL isRefreshing;
 @property NSMutableDictionary *imageDictionaryOfURLs;
 @property BOOL isLoading;
+@property NSString *fromLoadString;
 
 - (IBAction)exitButton:(id)sender;
 
