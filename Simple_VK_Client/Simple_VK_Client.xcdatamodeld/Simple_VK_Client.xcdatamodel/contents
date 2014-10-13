@@ -1,13 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="6244" systemVersion="13F34" minimumToolsVersion="Automatic" macOSVersion="Automatic" iOSVersion="Automatic">
-    <entity name="DictionaryOfCachedImages" representedClassName="DictionaryOfCachedImages" syncable="YES">
-        <attribute name="dictionary" optional="YES" attributeType="Binary" syncable="YES"/>
-        <attribute name="from" optional="YES" attributeType="String" syncable="YES"/>
-    </entity>
     <entity name="NewsItem" representedClassName="NewsItem" syncable="YES">
         <attribute name="dataWithArrayOfImages" optional="YES" attributeType="Binary" syncable="YES"/>
         <attribute name="date" optional="YES" attributeType="Date" syncable="YES"/>
-        <attribute name="imageAvatar" optional="YES" attributeType="Binary" syncable="YES"/>
+        <attribute name="imageAvatarURL" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="imageURL" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="likes" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="name" optional="YES" attributeType="String" syncable="YES"/>
@@ -15,7 +11,6 @@
         <attribute name="text" optional="YES" attributeType="String" syncable="YES"/>
     </entity>
     <elements>
-        <element name="DictionaryOfCachedImages" positionX="-45" positionY="72" width="128" height="75"/>
-        <element name="NewsItem" positionX="-63" positionY="-18" width="128" height="163"/>
+        <element name="NewsItem" positionX="-63" positionY="-18" width="128" height="165"/>
     </elements>
 </model>

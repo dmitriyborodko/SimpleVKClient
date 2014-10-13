@@ -9,6 +9,7 @@
 #import "NewsController.h"
 #import "NewsCell.h"
 #import "NewsItem.h"
+#import "ModelHandler.h"
 
 @interface NewsController ()
 
@@ -25,36 +26,21 @@
     [self.refreshControl addTarget:self action:@selector(refreshInvoked:forState:) forControlEvents:UIControlEventValueChanged];
     
     self.arrayOfIndexPathesOfCellsWithImages = [[NSMutableArray alloc] init];
-    
-    self.imageDictionaryOfURLs = [[NSMutableDictionary alloc] init];
-    [self loadImagesFromCacheWithRefresh:NO];
-    
     self.isLoading = YES;
-}
-
--(void)viewDidAppear:(BOOL)animated{
-    NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"DictionaryOfCachedImages"];
-    NSError *error = nil;
-    NSArray *dictionaryArrayOfOne = [self.managedObjectContext executeFetchRequest:fetchRequest error:&error];
-    if ([dictionaryArrayOfOne firstObject]) {
-        DictionaryOfCachedImages *dictionaryOfImages = [dictionaryArrayOfOne firstObject];
-        self.fromLoadString = dictionaryOfImages.from;
-        
-        self.isLoading = NO;
-    }
+    self.activityIndicatorView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+    self.dateFormat = [[NSDateFormatter alloc] init];
 }
 
 - (IBAction)exitButton:(id)sender{
     
     
-    [self.requestOprationManager GET:@"http://api.vk.com/oauth/logout" parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+    [self.requestOprationManager GET:LOGUOT_URL parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
         NSLog(@"JSON: %@", responseObject);
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
     }];
-    
-    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"VKAccessUserId"];
-    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"VKAccessToken"];
-    [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"VKAccessTokenDate"];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:ACCESS_USER_ID];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:ACCESS_TOKEN];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:ACCESS_TOKEN_DATE];
     [[NSUserDefaults standardUserDefaults] synchronize];
     
     //Deleting cookies to logout totally
@@ -77,7 +63,7 @@
 }
 
 -(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender{
-    if ([segue.identifier isEqualToString:@"showDetail"]) {
+    if ([segue.identifier isEqualToString:SHOW_DETAIL_IDENTIFIER]) {
         NSIndexPath *indexPath = [self.tableView indexPathForSelectedRow];
         NewsItem *detailItem = [self.fetchedResultsController objectAtIndexPath:indexPath];
         [[segue destinationViewController] setDetailItem:detailItem];
@@ -99,7 +85,7 @@
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView
 {
-    if ((scrollView.contentOffset.y + scrollView.frame.size.height - 150) >= scrollView.contentSize.height)
+    if ((scrollView.contentOffset.y + scrollView.frame.size.height - 100) >= scrollView.contentSize.height)
     {
         NSLog(@"pull to refresh act");
         [self loadNewPosts];
@@ -111,58 +97,44 @@
 
 
 - (void)getNewsFromVKWithSuccessBlock:(SuccessLoadBlock)successBlock andFailureBlock:(FailureLoadBlock)failureBlock {
-    NSString *userID = [[NSUserDefaults standardUserDefaults] objectForKey:@"VKAccessUserId"];
-    NSString *accessToken = [[NSUserDefaults standardUserDefaults] objectForKey:@"VKAccessToken"];
-    NSString *URLString = @"https://api.vk.com/method/newsfeed.get";
-    NSMutableDictionary *parameters = [[NSMutableDictionary alloc] init];
-        [parameters setObject:@"post" forKey:@"filters"];
-        [parameters setObject:@(NUMBER_OF_NEWS_PER_LOAD) forKey:@"count"];
-        [parameters setObject:userID forKey:@"owner_id"];
-        [parameters setObject:accessToken forKey:@"access_token"];
-    if (!self.isRefreshing) {
-        //continue news
-        [parameters setObject:self.fromLoadString forKey:@"from"];
-    }
+//    NSString *userID = [[NSUserDefaults standardUserDefaults] objectForKey:ACCESS_USER_ID];
+//    NSString *accessToken = [[NSUserDefaults standardUserDefaults] objectForKey:ACCESS_TOKEN];
+    NSString *URLString = GET_NEWS_FEED_URL;
+//    NSMutableDictionary *parameters = [[NSMutableDictionary alloc] init];
+//        [parameters setObject:@"post" forKey:@"filters"];
+//        [parameters setObject:@(NUMBER_OF_NEWS_PER_LOAD) forKey:@"count"];
+//        [parameters setObject:userID forKey:@"owner_id"];
+//        [parameters setObject:accessToken forKey:@"access_token"];
+//    if (!self.isRefreshing) {
+//        //continue news
+//        [parameters setObject:self.fromLoadString forKey:@"from"];
+//    }
+    NSMutableDictionary *parameters = [ModelHandler formNewsParametersWithRefreshing:self.isRefreshing andFromString:self.fromLoadString];
     
     //     News in JSON
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        [self.requestOprationManager GET:URLString parameters:parameters success:^(AFHTTPRequestOperation *operation, NSMutableDictionary *responseObject) {
-//                    NSLog(@"JSON: %@", responseObject);
-            NSLog(@"request DONE");
-            self.responseDictionary = responseObject;
-            [self saveNewsItemToCoreData:responseObject];
-            self.isRefreshing = NO;
-            successBlock();
-            
-        } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-            NSLog(@"Error: %@", error);
-            failureBlock();
-            UIAlertView *alertError = [[UIAlertView alloc] initWithTitle:@"Connection error" message:[error description] delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil, nil];
-            [alertError show];
-        }];
-    });
+    [self.requestOprationManager GET:URLString parameters:parameters success:^(AFHTTPRequestOperation *operation, NSMutableDictionary *responseObject) {
+        //                    NSLog(@"JSON: %@", responseObject);
+        NSLog(@"request DONE");
+        self.responseDictionary = responseObject;
+        [self saveNewsItemToCoreData:responseObject];
+        self.isRefreshing = NO;
+        successBlock();
+        
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        NSLog(@"Error: %@", error);
+        failureBlock();
+        UIAlertView *alertError = [[UIAlertView alloc] initWithTitle:@"Connection error" message:[error description] delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil, nil];
+        [alertError show];
+        self.isRefreshing = NO;
+    }];
 }
 
 -(void)deleteAllInstancesFromCoreData{
     self.arrayOfIndexPathesOfCellsWithImages = [[NSMutableArray alloc] init];
     [NSFetchedResultsController deleteCacheWithName:@"cache"];
-    [NSFetchedResultsController deleteCacheWithName:nil];
     
-    NSFetchRequest * newsFetchRequest = [[NSFetchRequest alloc] init];
-    [newsFetchRequest setEntity:[NSEntityDescription entityForName:@"NewsItem" inManagedObjectContext:self.managedObjectContext]];
-    [newsFetchRequest setIncludesPropertyValues:NO];
-    NSError * error = nil;
-    NSArray * arrayOfInstances = [self.managedObjectContext executeFetchRequest:newsFetchRequest error:&error];
-    for (NSManagedObject * newsItem in arrayOfInstances) {
-        [self.managedObjectContext deleteObject:newsItem];
-    }
+    [ModelHandler returnClearManagedObjectContext:self.managedObjectContext];
     
-    NSFetchRequest *fetchRequest = [[NSFetchRequest alloc] init];
-    [fetchRequest setEntity:[NSEntityDescription entityForName:@"DictionaryOfCachedImages" inManagedObjectContext:self.managedObjectContext]];
-    NSArray *dictionaryArrayOfOne = [self.managedObjectContext executeFetchRequest:fetchRequest error:nil];
-    for (DictionaryOfCachedImages *item in dictionaryArrayOfOne) {
-        [self.managedObjectContext deleteObject:item];
-    }
 }
 
 -(void)saveNewsItemToCoreData:(NSMutableDictionary*)responseObject{
@@ -171,102 +143,15 @@
         NSError *error;
         [self.managedObjectContext save:&error];
         if (error) {
-//            NSLog(@"%@", error);
-        }
-        self.imageDictionaryOfURLs = [[NSMutableDictionary alloc] init];
-    }
-    for (NSDictionary *itemDictionary in (NSArray*)[[responseObject objectForKey:@"response"] objectForKey:@"items"]) {
-        NSString *postSenderID = [itemDictionary objectForKey:@"source_id"];
-        NSLog(@"   check  %@ " , postSenderID);
-        
-        NewsItem *newsItem = [NSEntityDescription insertNewObjectForEntityForName:@"NewsItem" inManagedObjectContext:self.managedObjectContext];
-        
-        //Date
-        NSDate *date = [NSDate dateWithTimeIntervalSince1970:[[itemDictionary objectForKey:@"date"] longLongValue]];
-        newsItem.date = date;
-        
-        //Text
-        if ([itemDictionary objectForKey:@"text"]) {
-            newsItem.text =[itemDictionary objectForKey:@"text"];
-        }
-        
-        //Image for preview
-        if ([[[itemDictionary objectForKey:@"attachment"] objectForKey:@"type"]  isEqual: @"photo"]) {
-            NSURL *urlForImageOneBig = [NSURL URLWithString:[[[itemDictionary objectForKey:@"attachment"] objectForKey:@"photo"] objectForKey:@"src_big"]];
-            NSURL *urlForImageOne = [NSURL URLWithString:[[[itemDictionary objectForKey:@"attachment"] objectForKey:@"photo"] objectForKey:@"src"]];
-            if (urlForImageOneBig) {
-                newsItem.imageURL = [urlForImageOneBig absoluteString];
-            } else {
-                newsItem.imageURL = [urlForImageOne absoluteString];
-            }
-            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                UIImage *imageOne = [[UIImage alloc] initWithData:[NSData dataWithContentsOfURL:[NSURL URLWithString:newsItem.imageURL]]];
-                [self.imageDictionaryOfURLs setObject:imageOne forKey:newsItem.imageURL];
-            });
-        }
-        
-        //More images
-        NSMutableArray *arrayOfImages = [[NSMutableArray alloc] init];
-        for (NSDictionary *attachmentItem in [itemDictionary objectForKey:@"attachments"]) {
-            [attachmentItem objectForKey:@"photo"];
-            if ([[attachmentItem objectForKey:@"type"]  isEqual: @"photo"]) {
-                NSURL *urlForImageBig = [NSURL URLWithString:[[attachmentItem objectForKey:@"photo"] objectForKey:@"src_big"]];
-                NSURL *urlForImage = [NSURL URLWithString:[[attachmentItem objectForKey:@"photo"] objectForKey:@"src"]];
-                if (urlForImageBig) {
-                    [arrayOfImages addObject:urlForImageBig];
-                } else {
-                    [arrayOfImages addObject:urlForImage];
-                }
-            }
-        }
-        NSData *arrayData = [NSKeyedArchiver archivedDataWithRootObject:arrayOfImages];
-        newsItem.dataWithArrayOfImages = arrayData;
-     
-        //Likes
-        newsItem.likes = [[[itemDictionary objectForKey:@"likes"] objectForKey:@"count"] stringValue];
-        
-        //Reposts
-        newsItem.reposts = [[[itemDictionary objectForKey:@"reposts"] objectForKey:@"count"] stringValue];
-        
-        if ([postSenderID integerValue] > 0) {
-            for (NSDictionary *profile in [[responseObject objectForKey:@"response"] objectForKey:@"profiles"]) {
-                if ([[profile objectForKey:@"uid"] integerValue] == [postSenderID integerValue]) {
-                    
-                    //Name (Profile)
-                    newsItem.name = [[[profile objectForKey:@"first_name"] stringByAppendingString:@" "] stringByAppendingString:[profile objectForKey:@"last_name"]];
-                    
-                    //Avatar
-                    NSURL *urlForAvatar = [NSURL URLWithString:[profile objectForKey:@"photo_medium_rec"]];
-                    newsItem.imageAvatar = [NSData dataWithContentsOfURL:urlForAvatar];
-                }
-            }
-        } else {
-            //delete minus before postSenderID
-            long long convertToPositiveLongLongValue = [postSenderID longLongValue];
-            convertToPositiveLongLongValue = convertToPositiveLongLongValue * (-1);
-            NSString *postSenderIDPositive = [NSString stringWithFormat:@"%lld", convertToPositiveLongLongValue];
-            
-            for (NSDictionary *group in [[responseObject objectForKey:@"response"] objectForKey:@"groups"]) {
-                
-                if ([[group objectForKey:@"gid"] integerValue] == [postSenderIDPositive integerValue]) {
-                    
-                    //Name (Group)
-                    newsItem.name = [group objectForKey:@"name"];
-                    
-                    //Avatar
-                    NSURL *urlForAvatar = [NSURL URLWithString:[group objectForKey:@"photo_medium"]];
-                    newsItem.imageAvatar = [NSData dataWithContentsOfURL:urlForAvatar];
-                }
-            }
+            NSLog(@"%@", error);
         }
     }
+    self.managedObjectContext = [ModelHandler saveResponseObject:responseObject andReturnManagedObjectContext:self.managedObjectContext];
+   
     //From (to load from that post)
-    self.fromLoadString = [[responseObject objectForKey:@"response"] objectForKey:@"new_from"];
+    self.fromLoadString = [ModelHandler fromFieldInResponse:responseObject];
     
     self.responseDictionary = [[NSMutableDictionary alloc] init];
-    if (self.isRefreshing) {
-        [self saveImageCache];
-    }
 }
 
 -(void)loadNewsFromCoreDataForCell:(NewsCell*)cell OnIndexPath:(NSIndexPath*)indexPath{
@@ -276,34 +161,37 @@
     [cell.nameOfPostSender setText:newsItemFromCoreData.name];
     
     //Avatar
-    UIImage *imageAvatar = [[UIImage alloc] initWithData:newsItemFromCoreData.imageAvatar];
-    [cell.imageOfPostSender setImage:imageAvatar];
+    [cell.imageOfPostSender setImageWithURLRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:newsItemFromCoreData.imageAvatarURL]]
+                               placeholderImage:[UIImage imageNamed:PLACEHOLDER_IMAGE]
+                                        success:^(NSURLRequest *request, NSHTTPURLResponse *response, UIImage *image) {
+                                            [cell.imageOfPostSender setImage:image];
+                                        }
+                                        failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
+                                        }];
     CALayer * layer = [cell.imageOfPostSender layer];
     [layer setMasksToBounds:YES];
     [layer setCornerRadius:25.0];
     
     //Date
-    NSDateFormatter *dateFormat = [[NSDateFormatter alloc] init];
-    [dateFormat setDateFormat:@"YYYY-MM-dd\'T\'HH:mm:ssZZZZZ"];
-    NSDate *formattedDate = [dateFormat dateFromString:[newsItemFromCoreData.date description]];
-    [dateFormat setDateFormat:@"HH:mm:ss dd/MM"];
-    [cell.dateOfPost setText:[NSString stringWithFormat:@"%@",[dateFormat stringFromDate:formattedDate]]];
+    [self.dateFormat setDateFormat:@"YYYY-MM-dd\'T\'HH:mm:ssZZZZZ"];
+    NSDate *formattedDate = [self.dateFormat dateFromString:[newsItemFromCoreData.date description]];
+    [self.dateFormat setDateFormat:@"HH:mm:ss dd/MM"];
+    [cell.dateOfPost setText:[NSString stringWithFormat:@"%@",[self.dateFormat stringFromDate:formattedDate]]];
     
     //Text
-    if (newsItemFromCoreData.text) {
-        [cell.textOfPost setText:newsItemFromCoreData.text];
-    } else {
-        [cell.textOfPost setText:newsItemFromCoreData.text];
-    }
+    [cell.textOfPost setText:newsItemFromCoreData.text];
     
     //Image preview
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        
-    });
-    UIImage *imagePreview = [self.imageDictionaryOfURLs objectForKey:newsItemFromCoreData.imageURL];
-    [cell.imageOfPostOne setImage:imagePreview];
-    if (imagePreview) {
+    cell.imageOfPostOne.hidden = YES;
+    if (!(newsItemFromCoreData.imageURL == nil)) {
+        cell.imageOfPostOne.hidden = NO;
         [self.arrayOfIndexPathesOfCellsWithImages addObject:indexPath];
+        [cell.imageOfPostOne setImageWithURLRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:newsItemFromCoreData.imageURL]]
+                                   placeholderImage:[UIImage imageNamed:PLACEHOLDER_IMAGE]
+                                            success:^(NSURLRequest *request, NSHTTPURLResponse *response, UIImage *image) {
+                                                [cell.imageOfPostOne setImage:image];
+                                            }
+                                            failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {                                            }];
     }
     
     //Likes
@@ -311,30 +199,6 @@
     
     //Reposts
     [cell.repostsOfPost setText:newsItemFromCoreData.reposts];
-}
-
--(void)saveImageCache{
-    DictionaryOfCachedImages *dictionaryOfCachedImages = [NSEntityDescription insertNewObjectForEntityForName:@"DictionaryOfCachedImages" inManagedObjectContext:self.managedObjectContext];
-    dictionaryOfCachedImages.dictionary = [NSKeyedArchiver archivedDataWithRootObject:self.imageDictionaryOfURLs];
-    dictionaryOfCachedImages.from = self.fromLoadString;
-    [self.managedObjectContext save:nil];
-}
-
--(void)loadImagesFromCacheWithRefresh:(BOOL)refresh{
-    //    Load images from cache
-    NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"DictionaryOfCachedImages"];
-    NSError *error = nil;
-    NSArray *dictionaryArrayOfOne = [self.managedObjectContext executeFetchRequest:fetchRequest error:&error];
-    if (![dictionaryArrayOfOne firstObject]) {
-        NSLog(@"Trouble with reading image cache");
-    }
-    DictionaryOfCachedImages *dictionaryOfImages = [dictionaryArrayOfOne firstObject];
-    
-    for (NewsItem *newsItem in self.fetchedResultsController.fetchedObjects) {
-        if (newsItem.imageURL) {
-            self.imageDictionaryOfURLs = (NSMutableDictionary*) [NSKeyedUnarchiver unarchiveObjectWithData:dictionaryOfImages.dictionary];
-        }
-    }
 }
 
 - (void)refreshInvoked:(id)sender forState:(UIControlState)state {
@@ -352,13 +216,14 @@
 
 - (void)loadNewPosts {
     SuccessLoadBlock blockToExecuteWhenResponseRecieved = ^(void){
-        //NSLog(@"executed");
+        [self.activityIndicatorView stopAnimating];
     };
     FailureLoadBlock blockToExecuteWhenResponseFailed = ^(void){
-        //NSLog(@" not executed");
     };
-//    self.isRefreshing = NO;
     if (!self.isLoading && !self.isRefreshing) {
+        self.activityIndicatorView.center = self.bottomView.center;
+        [self.view addSubview:self.activityIndicatorView];
+        [self.activityIndicatorView startAnimating];
         self.isLoading = YES;
         [self getNewsFromVKWithSuccessBlock:blockToExecuteWhenResponseRecieved andFailureBlock:blockToExecuteWhenResponseFailed];
     }
@@ -372,7 +237,7 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    NewsCell *cell = [tableView dequeueReusableCellWithIdentifier:@"newsCell" forIndexPath:indexPath];
+    NewsCell *cell = [tableView dequeueReusableCellWithIdentifier:NEWS_CELL_IDENTIFIER forIndexPath:indexPath];
     
     [self setUpNewsCell:cell forIndexPath:indexPath andResponseObject:(NSDictionary*)self.responseDictionary];
     
@@ -385,14 +250,14 @@
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
     if (![self.arrayOfIndexPathesOfCellsWithImages containsObject:indexPath]) {
-        return 98.0f;
+        return HEIGHT_OF_CELL_SMALL;
     } else {
-        return 236.0f;
+        return HEIGHT_OF_CELL_BIG;
     }
 }
 
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
-    [self performSegueWithIdentifier:@"showDetail" sender:nil];
+    [self performSegueWithIdentifier:SHOW_DETAIL_IDENTIFIER sender:nil];
 }
 
 -(UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section{
@@ -406,13 +271,13 @@
     if (_fetchedResultsController != nil) {
         return _fetchedResultsController;
     }
-    NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:@"NewsItem"];
+    NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:ENTITY_NEWS_ITEM];
     
     NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"date" ascending:NO];
     NSArray *sortDescriptors = @[sortDescriptor];
     [fetchRequest setSortDescriptors:sortDescriptors];
     
-    NSFetchedResultsController *aFetchedResultsController = [[NSFetchedResultsController alloc] initWithFetchRequest:fetchRequest managedObjectContext:self.managedObjectContext sectionNameKeyPath:nil cacheName:nil];
+    NSFetchedResultsController *aFetchedResultsController = [[NSFetchedResultsController alloc] initWithFetchRequest:fetchRequest managedObjectContext:self.managedObjectContext sectionNameKeyPath:nil cacheName:@"cache"];
     aFetchedResultsController.delegate = self;
     self.fetchedResultsController = aFetchedResultsController;
     NSError *error = nil;

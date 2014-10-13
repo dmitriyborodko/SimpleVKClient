@@ -20,14 +20,14 @@
 }
 
 -(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender{
-    if ([segue.identifier isEqualToString:SHOW_NEWS_CONTROLLER_IDENTIFIER]) {
+    if ([segue.identifier isEqualToString:@"showNewsController"]) {
         [[segue destinationViewController] setManagedObjectContext:self.managedObjectContext];
     }
 }
 
 -(void)viewWillAppear:(BOOL)animated{
-    if ([[NSUserDefaults standardUserDefaults] objectForKey:ACCESS_TOKEN]) {
-        [self performSegueWithIdentifier:SHOW_NEWS_CONTROLLER_IDENTIFIER sender:nil];
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:@"VKAccessToken"]) {
+        [self performSegueWithIdentifier:@"showNewsController" sender:nil];
     }
 }
 

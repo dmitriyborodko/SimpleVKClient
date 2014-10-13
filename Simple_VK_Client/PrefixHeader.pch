@@ -1,0 +1,39 @@
+//
+//  PrefixHeader.pch
+//  Simple_VK_Client
+//
+//  Created by Dmitriy on 13/10/14.
+//  Copyright (c) 2014 ALS. All rights reserved.
+//
+
+#ifndef Simple_VK_Client_PrefixHeader_pch
+#define Simple_VK_Client_PrefixHeader_pch
+
+#define PLACEHOLDER_IMAGE @"placeholder.png"
+#define ENTITY_NEWS_ITEM @"NewsItem"
+#define LOGUOT_URL @"http://api.vk.com/oauth/logout"
+#define ACCESS_USER_ID @"VKAccessUserId"
+#define ACCESS_TOKEN @"VKAccessToken"
+#define ACCESS_TOKEN_DATE @"VKAccessTokenDate"
+#define GET_NEWS_FEED_URL @"https://api.vk.com/method/newsfeed.get"
+#define SHOW_DETAIL_IDENTIFIER @"showDetail"
+#define SHOW_NEWS_CONTROLLER_IDENTIFIER @"showNewsController"
+#define LOGIN_URL @"http://api.vk.com/oauth/authorize?client_id=%@&scope=%@&redirect_uri=http://api.vk.com/blank.html&display=touch&revoke=1&response_type=token"
+#define APP_ID @"4568899"
+#define APP_ACCESSIBILITY_SCOPE @"wall,friends"
+
+enum
+{
+    NUMBER_OF_NEWS_PER_LOAD = 5,
+    HEIGHT_OF_CELL_SMALL = 98,
+    HEIGHT_OF_CELL_BIG = 236,
+    FONT_SIZE_OF_THE_TEXT_CELL = 15,
+    SIZE_OF_IMAGES = 400
+};
+
+
+
+// Include any system framework and library headers here that should be included in all compilation units.
+// You will also need to set the Prefix Header build setting of one or more of your targets to reference this file.
+
+#endif

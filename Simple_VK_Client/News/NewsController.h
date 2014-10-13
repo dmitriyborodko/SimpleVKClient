@@ -10,8 +10,7 @@
 #import <AFNetworking/AFNetworking.h>
 #import <CoreData/CoreData.h>
 #import "DetailView.h"
-
-#define NEWS_CELL_IDENTIFIER @"newsCell"
+#import "DictionaryOfCachedImages.h"
 
 @interface NewsController : UITableViewController <NSFetchedResultsControllerDelegate, UIScrollViewDelegate>
 
@@ -21,15 +20,18 @@
 @property NSMutableArray *arrayOfIndexPathesOfCellsWithImages;
 @property NSMutableDictionary *responseDictionary;
 @property BOOL isRefreshing;
+@property NSMutableDictionary *imageDictionaryOfURLs;
 @property BOOL isLoading;
 @property NSString *fromLoadString;
-@property UIActivityIndicatorView *activityIndicatorView;
-@property NSDateFormatter *dateFormat;
 
 - (IBAction)exitButton:(id)sender;
-@property (weak, nonatomic) IBOutlet UIView *bottomView;
 
 @end
 
 typedef void (^ SuccessLoadBlock)(void);
 typedef void (^ FailureLoadBlock)(void);
+
+enum
+{
+    NUMBER_OF_NEWS_PER_LOAD = 5,
+};

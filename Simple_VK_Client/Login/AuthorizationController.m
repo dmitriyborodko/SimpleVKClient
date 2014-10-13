@@ -18,9 +18,9 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view.
     
-    NSString *appID = APP_ID;
-    NSString *scope = APP_ACCESSIBILITY_SCOPE;
-    NSString *authLink = [NSString stringWithFormat:LOGIN_URL, appID, scope];
+    NSString *appID = @"4568899";
+    NSString *scope = @"wall,friends";
+    NSString *authLink = [NSString stringWithFormat:@"http://api.vk.com/oauth/authorize?client_id=%@&scope=%@&redirect_uri=http://api.vk.com/blank.html&display=touch&revoke=1&response_type=token", appID, scope];
     NSURL *nsurl = [NSURL URLWithString:authLink];
     
     self.webView.delegate = self;
@@ -37,11 +37,11 @@
         NSString *user_id = [userAr lastObject];
         NSLog(@"User id: %@", user_id);
         if(user_id){
-            [[NSUserDefaults standardUserDefaults] setObject:user_id forKey:ACCESS_USER_ID];
+            [[NSUserDefaults standardUserDefaults] setObject:user_id forKey:@"VKAccessUserId"];
         }
         if(accessToken){
-            [[NSUserDefaults standardUserDefaults] setObject:accessToken forKey:ACCESS_TOKEN];
-            [[NSUserDefaults standardUserDefaults] setObject:[NSDate date] forKey:ACCESS_TOKEN_DATE];
+            [[NSUserDefaults standardUserDefaults] setObject:accessToken forKey:@"VKAccessToken"];
+            [[NSUserDefaults standardUserDefaults] setObject:[NSDate date] forKey:@"VKAccessTokenDate"];
             [[NSUserDefaults standardUserDefaults] synchronize];
         }
         NSLog(@"vkWebView response: %@",[[[webView request] URL] absoluteString]);

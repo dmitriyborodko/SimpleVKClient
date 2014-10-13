@@ -20,17 +20,9 @@
     if (self.detailItem.text) {
         self.isCellWithText = YES;
     }
+    self.dateFormat = [[NSDateFormatter alloc] init];
     [self configureView];
-    
-    //Load Images
-    self.arrayOfImages = [[NSMutableArray alloc] init];
-    NSMutableArray *arrayWithImageURLs = [[NSMutableArray alloc] initWithArray:[NSKeyedUnarchiver unarchiveObjectWithData:self.detailItem.dataWithArrayOfImages]];
-    for (NSURL *imageURL in arrayWithImageURLs) {
-        UIImage *image = [[UIImage alloc] initWithData:[NSData dataWithContentsOfURL:imageURL]];
-        if (image) {
-            [self.arrayOfImages addObject:image];
-        }
-    }
+    self.arrayWithImageURLs = [[NSMutableArray alloc] initWithArray:[NSKeyedUnarchiver unarchiveObjectWithData:self.detailItem.dataWithArrayOfImages]];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -44,17 +36,25 @@
     self.tableView.dataSource = self;
     
     //Date
-    NSDateFormatter *dateFormat = [[NSDateFormatter alloc] init];
-    [dateFormat setDateFormat:@"YYYY-MM-dd\'T\'HH:mm:ssZZZZZ"];
-    NSDate *formattedDate = [dateFormat dateFromString:[self.detailItem.date description]];
-    [dateFormat setDateFormat:@"HH:mm:ss dd/MM"];
-    [self.dateOfPost setText:[NSString stringWithFormat:@"%@",[dateFormat stringFromDate:formattedDate]]];
+    [self.dateFormat setDateFormat:@"YYYY-MM-dd\'T\'HH:mm:ssZZZZZ"];
+    NSDate *formattedDate = [self.dateFormat dateFromString:[self.detailItem.date description]];
+    [self.dateFormat setDateFormat:@"HH:mm:ss dd/MM"];
+    [self.dateOfPost setText:[NSString stringWithFormat:@"%@",[self.dateFormat stringFromDate:formattedDate]]];
+    
+    //Likes and Reposts
     [self.likesOfPost setText:self.detailItem.likes];
     [self.repostOfPost setText:self.detailItem.reposts];
     
     //Avatar
-    UIImage *imageAvatar = [[UIImage alloc] initWithData:self.detailItem.imageAvatar];
-    [self.avatarOfPoster setImage:imageAvatar];
+    [self.avatarOfPoster setImageWithURLRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:self.detailItem.imageAvatarURL]]
+                            placeholderImage:[UIImage imageNamed:PLACEHOLDER_IMAGE]
+                                     success:^(NSURLRequest *request, NSHTTPURLResponse *response, UIImage *image) {
+                                         [self.avatarOfPoster setImage:image];
+                                     }
+                                     failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
+                                         
+                                     }];
+    
     CALayer * layer = [self.avatarOfPoster layer];
     [layer setMasksToBounds:YES];
     [layer setCornerRadius:25.0];
@@ -62,9 +62,9 @@
 
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
     if (self.isCellWithText) {
-        return 1 + [self.arrayOfImages count];
+        return 1 + [self.arrayWithImageURLs count];
     } else {
-        return [self.arrayOfImages count];
+        return [self.arrayWithImageURLs count];
     }
 }
 
@@ -72,9 +72,6 @@
     if (self.isCellWithText) {
         if (indexPath.row == 0) {
             // Text
-//            CGSize stringSize = [self.detailItem.text sizeWithFont:[UIFont systemFontOfSize:FONT_SIZE_OF_THE_TEXT_CELL + 1]
-//                                  constrainedToSize:CGSizeMake(tableView.frame.size.width, MAXFLOAT)
-//                                      lineBreakMode:NSLineBreakByWordWrapping];
             CGRect stringSize = [self.detailItem.text boundingRectWithSize:CGSizeMake(tableView.frame.size.width, MAXFLOAT) options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:[UIFont boldSystemFontOfSize:FONT_SIZE_OF_THE_TEXT_CELL + 1]} context:nil];
             NSLog(@"%f",stringSize.size.height);
             UITextView *textView=[[UITextView alloc] initWithFrame:CGRectMake(5, 5, tableView.frame.size.width, stringSize.size.height + 15)];
@@ -82,21 +79,34 @@
             textView.text = self.detailItem.text;
             textView.textColor = [UIColor blackColor];
             textView.editable = NO;
-            UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"textCell" forIndexPath:indexPath];
+            UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:TEXT_CELL_IDENTIFIER forIndexPath:indexPath];
             [cell.textLabel setFont:[UIFont boldSystemFontOfSize:FONT_SIZE_OF_THE_TEXT_CELL]];
             [cell.contentView addSubview:textView];
             return cell;
-            
         } else {
             //Images
-            ImageCell *cell = [tableView dequeueReusableCellWithIdentifier:@"imageCell" forIndexPath:indexPath];
-            [cell.imageInCell setImage:[self.arrayOfImages objectAtIndex:indexPath.row - 1]];
+            ImageCell *cell = [tableView dequeueReusableCellWithIdentifier:IMAGE_CELL_IDENTIFIER forIndexPath:indexPath];
+            [cell.imageInCell setImageWithURLRequest:[NSURLRequest requestWithURL:[self.arrayWithImageURLs objectAtIndex:indexPath.row - 1]]
+                                    placeholderImage:[UIImage imageNamed:PLACEHOLDER_IMAGE]
+                                             success:^(NSURLRequest *request, NSHTTPURLResponse *response, UIImage *image) {
+                                                 [cell.imageInCell setImage:image];
+                                             }
+                                             failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
+                                                 
+                                             }];
             return cell;
         }
     } else {
         //Images
-        ImageCell *cell = [tableView dequeueReusableCellWithIdentifier:@"imageCell" forIndexPath:indexPath];
-        [cell.imageInCell setImage:[self.arrayOfImages objectAtIndex:indexPath.row]];
+        ImageCell *cell = [tableView dequeueReusableCellWithIdentifier:IMAGE_CELL_IDENTIFIER forIndexPath:indexPath];
+        [cell.imageInCell setImageWithURLRequest:[NSURLRequest requestWithURL:[self.arrayWithImageURLs objectAtIndex:indexPath.row]]
+                                placeholderImage:[UIImage imageNamed:PLACEHOLDER_IMAGE]
+                                         success:^(NSURLRequest *request, NSHTTPURLResponse *response, UIImage *image) {
+                                             [cell.imageInCell setImage:image];
+                                         }
+                                         failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
+                                             
+                                         }];
         return cell;
     }
 }
@@ -104,18 +114,13 @@
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath{
     if (self.isCellWithText) {
         if (indexPath.row == 0) {
-//            CGSize stringSize = [self.detailItem.text sizeWithFont:[UIFont systemFontOfSize:FONT_SIZE_OF_THE_TEXT_CELL + 1]
-//                                                 constrainedToSize:CGSizeMake(tableView.frame.size.width, MAXFLOAT)
-//                                                     lineBreakMode:NSLineBreakByWordWrapping];
             CGRect stringSize = [self.detailItem.text boundingRectWithSize:CGSizeMake(tableView.frame.size.width, MAXFLOAT) options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName:[UIFont boldSystemFontOfSize:FONT_SIZE_OF_THE_TEXT_CELL + 1]} context:nil];
             return stringSize.size.height + 25;
         } else {
-            UIImage *imageToSizeCell = [self.arrayOfImages objectAtIndex:indexPath.row - 1];
-            return imageToSizeCell.size.height;
+            return SIZE_OF_IMAGES;
         }
     } else {
-        UIImage *imageToSizeCell = [self.arrayOfImages objectAtIndex:indexPath.row];
-        return imageToSizeCell.size.height;
+        return SIZE_OF_IMAGES;
     }
 }
 

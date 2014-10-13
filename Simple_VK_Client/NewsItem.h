@@ -2,7 +2,7 @@
 //  NewsItem.h
 //  Simple_VK_Client
 //
-//  Created by Dmitriy on 10/10/14.
+//  Created by Dmitriy on 13/10/14.
 //  Copyright (c) 2014 ALS. All rights reserved.
 //
 
@@ -14,7 +14,7 @@
 
 @property (nonatomic, retain) NSData * dataWithArrayOfImages;
 @property (nonatomic, retain) NSDate * date;
-@property (nonatomic, retain) NSData * imageAvatar;
+@property (nonatomic, retain) NSString * imageAvatarURL;
 @property (nonatomic, retain) NSString * imageURL;
 @property (nonatomic, retain) NSString * likes;
 @property (nonatomic, retain) NSString * name;

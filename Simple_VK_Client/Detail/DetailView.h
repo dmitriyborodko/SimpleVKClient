@@ -9,11 +9,6 @@
 #import <UIKit/UIKit.h>
 #import "NewsItem.h"
 #import "ImageCell.h"
-#import <AFNetworking/UIKit+AFNetworking.h>
-
-#define IMAGE_CELL_IDENTIFIER @"imageCell"
-#define TEXT_CELL_IDENTIFIER @"textCell"
-
 
 @interface DetailView : UIViewController <UIScrollViewDelegate, UITableViewDataSource, UITableViewDelegate>
 
@@ -28,8 +23,11 @@
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
 
 @property NSMutableArray *arrayOfImages;
-@property NSMutableArray *arrayWithImageURLs;
 @property BOOL isCellWithText;
-@property NSDateFormatter *dateFormat;
 
 @end
+
+enum
+{
+    FONT_SIZE_OF_THE_TEXT_CELL = 15,
+};
