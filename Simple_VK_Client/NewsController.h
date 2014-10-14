@@ -13,18 +13,18 @@
 
 #define NEWS_CELL_IDENTIFIER @"newsCell"
 
+static NSDateFormatter *dateFormat;
+
 @interface NewsController : UITableViewController <NSFetchedResultsControllerDelegate, UIScrollViewDelegate>
 
 @property (strong, nonatomic) NSManagedObjectContext *managedObjectContext;
 @property (strong, nonatomic) NSFetchedResultsController *fetchedResultsController;
 @property AFHTTPRequestOperationManager *requestOprationManager;
 @property NSMutableArray *arrayOfIndexPathesOfCellsWithImages;
-@property NSMutableDictionary *responseDictionary;
 @property BOOL isRefreshing;
 @property BOOL isLoading;
 @property NSString *fromLoadString;
 @property UIActivityIndicatorView *activityIndicatorView;
-@property NSDateFormatter *dateFormat;
 
 - (IBAction)exitButton:(id)sender;
 @property (weak, nonatomic) IBOutlet UIView *bottomView;

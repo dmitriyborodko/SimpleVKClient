@@ -11,6 +11,31 @@
 
 @implementation ModelHandler
 
++ (NSManagedObjectContext*)getNewsFromVKWithSuccessBlock:(SuccessLoadBlock)successBlock failureBlock:(FailureLoadBlock)failureBlock isRefreshing:(BOOL)isRefreshing requestOprationManager:(AFHTTPRequestOperationManager*)requestOprationManager andManagedObjectContext:(NSManagedObjectContext*)managedObjectContext{
+    NSString *URLString = GET_NEWS_FEED_URL;
+    NSMutableDictionary *parameters = [ModelHandler formNewsParametersWithRefreshing:isRefreshing andFromString:fromLoadString];
+    
+    //     News in JSON
+    [requestOprationManager GET:URLString parameters:parameters success:^(AFHTTPRequestOperation *operation, NSMutableDictionary *responseObject) {
+        //        NSLog(@"JSON: %@", responseObject);
+        NSLog(@"request DONE");
+        //        self.responseDictionary = responseObject;
+        if (isRefreshing) {
+            [ModelHandler returnClearManagedObjectContext:managedObjectContext];
+        }
+        [ModelHandler saveResponseObject:responseObject andReturnManagedObjectContext:managedObjectContext];
+        [managedObjectContext save:nil];
+        successBlock();
+        
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+        NSLog(@"Error: %@", error);
+        failureBlock();
+        UIAlertView *alertError = [[UIAlertView alloc] initWithTitle:@"Connection error" message:[error description] delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil, nil];
+        [alertError show];
+    }];
+    return managedObjectContext;
+}
+
 + (NSManagedObjectContext*)saveResponseObject:(NSMutableDictionary*)responseObject andReturnManagedObjectContext:(NSManagedObjectContext*)managedObjectContext{
     for (NSDictionary *itemDictionary in (NSArray*)[[responseObject objectForKey:@"response"] objectForKey:@"items"]) {
         NSString *postSenderID = [itemDictionary objectForKey:@"source_id"];
@@ -92,6 +117,7 @@
             }
         }
     }
+    fromLoadString = [ModelHandler fromFieldInResponse:responseObject];
     return managedObjectContext;
 }
 
@@ -106,6 +132,7 @@
     for (NSManagedObject * newsItem in arrayOfInstances) {
         [managedObjectContext deleteObject:newsItem];
     }
+    [managedObjectContext save:nil];
     return managedObjectContext;
 }
 
@@ -128,6 +155,26 @@
     return parameters;
 }
 
-
++ (void)quitVKWithRequestOprationManager:(AFHTTPRequestOperationManager*)requestOprationManager{
+    [requestOprationManager GET:LOGUOT_URL parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
+        NSLog(@"JSON: %@", responseObject);
+    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+    }];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:ACCESS_USER_ID];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:ACCESS_TOKEN];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:ACCESS_TOKEN_DATE];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+    
+    //Deleting cookies to logout totally
+    NSHTTPCookie *cookie;
+    NSHTTPCookieStorage *storage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
+    for (cookie in [storage cookies]) {
+        NSString* domainName = [cookie domain];
+        NSRange domainRange = [domainName rangeOfString:@"vk.com"];
+        if(domainRange.length > 0) {
+            [storage deleteCookie:cookie];
+        }
+    }
+}
 
 @end

@@ -14,6 +14,7 @@
 #define IMAGE_CELL_IDENTIFIER @"imageCell"
 #define TEXT_CELL_IDENTIFIER @"textCell"
 
+static NSDateFormatter *dateFormat;
 
 @interface DetailView : UIViewController <UIScrollViewDelegate, UITableViewDataSource, UITableViewDelegate>
 
@@ -30,6 +31,5 @@
 @property NSMutableArray *arrayOfImages;
 @property NSMutableArray *arrayWithImageURLs;
 @property BOOL isCellWithText;
-@property NSDateFormatter *dateFormat;
 
 @end

@@ -28,38 +28,18 @@
     self.arrayOfIndexPathesOfCellsWithImages = [[NSMutableArray alloc] init];
     self.isLoading = YES;
     self.activityIndicatorView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
-    self.dateFormat = [[NSDateFormatter alloc] init];
+    dateFormat = [[NSDateFormatter alloc] init];
 }
 
 - (IBAction)exitButton:(id)sender{
-    
-    
-    [self.requestOprationManager GET:LOGUOT_URL parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
-        NSLog(@"JSON: %@", responseObject);
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-    }];
-    [[NSUserDefaults standardUserDefaults] removeObjectForKey:ACCESS_USER_ID];
-    [[NSUserDefaults standardUserDefaults] removeObjectForKey:ACCESS_TOKEN];
-    [[NSUserDefaults standardUserDefaults] removeObjectForKey:ACCESS_TOKEN_DATE];
-    [[NSUserDefaults standardUserDefaults] synchronize];
-    
-    //Deleting cookies to logout totally
-    NSHTTPCookie *cookie;
-    NSHTTPCookieStorage *storage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
-    for (cookie in [storage cookies]) {
-        NSString* domainName = [cookie domain];
-        NSRange domainRange = [domainName rangeOfString:@"vk.com"];
-        if(domainRange.length > 0) {
-            [storage deleteCookie:cookie];
-        }
-    }
+    [ModelHandler quitVKWithRequestOprationManager:self.requestOprationManager];
     
     self.isRefreshing = YES;
     self.isLoading = YES;
-    [self deleteAllInstancesFromCoreData];
-    
+    self.arrayOfIndexPathesOfCellsWithImages = [[NSMutableArray alloc] init];
+    [NSFetchedResultsController deleteCacheWithName:@"cache"];
+    [ModelHandler returnClearManagedObjectContext:self.managedObjectContext];
     [self.navigationController popToRootViewControllerAnimated:YES];
-    
 }
 
 -(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender{
@@ -70,19 +50,6 @@
     }
 }
 
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-}
-
-- (UIImage *)imageWithImage:(UIImage *)image scaledToSize:(CGSize)newSize {
-    UIGraphicsBeginImageContextWithOptions(newSize, NO, 1.0);
-    [image drawInRect:CGRectMake(0, 0, newSize.width, newSize.height)];
-    UIImage *newImage = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    return newImage;
-}
-
-
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView
 {
     if ((scrollView.contentOffset.y + scrollView.frame.size.height - 100) >= scrollView.contentSize.height)
@@ -92,69 +59,9 @@
     }
 }
 
+#pragma mark - Data Managing
 
-#pragma mark - Networking
-
-
-- (void)getNewsFromVKWithSuccessBlock:(SuccessLoadBlock)successBlock andFailureBlock:(FailureLoadBlock)failureBlock {
-//    NSString *userID = [[NSUserDefaults standardUserDefaults] objectForKey:ACCESS_USER_ID];
-//    NSString *accessToken = [[NSUserDefaults standardUserDefaults] objectForKey:ACCESS_TOKEN];
-    NSString *URLString = GET_NEWS_FEED_URL;
-//    NSMutableDictionary *parameters = [[NSMutableDictionary alloc] init];
-//        [parameters setObject:@"post" forKey:@"filters"];
-//        [parameters setObject:@(NUMBER_OF_NEWS_PER_LOAD) forKey:@"count"];
-//        [parameters setObject:userID forKey:@"owner_id"];
-//        [parameters setObject:accessToken forKey:@"access_token"];
-//    if (!self.isRefreshing) {
-//        //continue news
-//        [parameters setObject:self.fromLoadString forKey:@"from"];
-//    }
-    NSMutableDictionary *parameters = [ModelHandler formNewsParametersWithRefreshing:self.isRefreshing andFromString:self.fromLoadString];
-    
-    //     News in JSON
-    [self.requestOprationManager GET:URLString parameters:parameters success:^(AFHTTPRequestOperation *operation, NSMutableDictionary *responseObject) {
-        //                    NSLog(@"JSON: %@", responseObject);
-        NSLog(@"request DONE");
-        self.responseDictionary = responseObject;
-        [self saveNewsItemToCoreData:responseObject];
-        self.isRefreshing = NO;
-        successBlock();
-        
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        NSLog(@"Error: %@", error);
-        failureBlock();
-        UIAlertView *alertError = [[UIAlertView alloc] initWithTitle:@"Connection error" message:[error description] delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil, nil];
-        [alertError show];
-        self.isRefreshing = NO;
-    }];
-}
-
--(void)deleteAllInstancesFromCoreData{
-    self.arrayOfIndexPathesOfCellsWithImages = [[NSMutableArray alloc] init];
-    [NSFetchedResultsController deleteCacheWithName:@"cache"];
-    
-    [ModelHandler returnClearManagedObjectContext:self.managedObjectContext];
-    
-}
-
--(void)saveNewsItemToCoreData:(NSMutableDictionary*)responseObject{
-    if (self.isRefreshing) {
-        [self deleteAllInstancesFromCoreData];
-        NSError *error;
-        [self.managedObjectContext save:&error];
-        if (error) {
-            NSLog(@"%@", error);
-        }
-    }
-    self.managedObjectContext = [ModelHandler saveResponseObject:responseObject andReturnManagedObjectContext:self.managedObjectContext];
-   
-    //From (to load from that post)
-    self.fromLoadString = [ModelHandler fromFieldInResponse:responseObject];
-    
-    self.responseDictionary = [[NSMutableDictionary alloc] init];
-}
-
--(void)loadNewsFromCoreDataForCell:(NewsCell*)cell OnIndexPath:(NSIndexPath*)indexPath{
+- (void)loadNewsFromCoreDataForCell:(NewsCell*)cell OnIndexPath:(NSIndexPath*)indexPath{
     NewsItem *newsItemFromCoreData = [self.fetchedResultsController objectAtIndexPath:indexPath];
     
     //Name
@@ -173,10 +80,10 @@
     [layer setCornerRadius:25.0];
     
     //Date
-    [self.dateFormat setDateFormat:@"YYYY-MM-dd\'T\'HH:mm:ssZZZZZ"];
-    NSDate *formattedDate = [self.dateFormat dateFromString:[newsItemFromCoreData.date description]];
-    [self.dateFormat setDateFormat:@"HH:mm:ss dd/MM"];
-    [cell.dateOfPost setText:[NSString stringWithFormat:@"%@",[self.dateFormat stringFromDate:formattedDate]]];
+    [dateFormat setDateFormat:@"YYYY-MM-dd\'T\'HH:mm:ssZZZZZ"];
+    NSDate *formattedDate = [dateFormat dateFromString:[newsItemFromCoreData.date description]];
+    [dateFormat setDateFormat:@"HH:mm:ss dd/MM"];
+    [cell.dateOfPost setText:[NSString stringWithFormat:@"%@",[dateFormat stringFromDate:formattedDate]]];
     
     //Text
     [cell.textOfPost setText:newsItemFromCoreData.text];
@@ -205,27 +112,34 @@
     SuccessLoadBlock blockToExecuteWhenResponseRecieved = ^(void){
         [self.tableView addSubview:self.refreshControl];
         [self.refreshControl endRefreshing];
+        self.isRefreshing = NO;
     };
     FailureLoadBlock blockToExecuteWhenResponseFailed = ^(void){
         [self.tableView addSubview:self.refreshControl];
         [self.refreshControl endRefreshing];
+        self.isRefreshing = NO;
     };
-        self.isRefreshing = YES;
-        [self getNewsFromVKWithSuccessBlock:blockToExecuteWhenResponseRecieved andFailureBlock:blockToExecuteWhenResponseFailed];
+    self.isRefreshing = YES;
+    self.arrayOfIndexPathesOfCellsWithImages = [[NSMutableArray alloc] init];
+    [NSFetchedResultsController deleteCacheWithName:@"cache"];
+    self.managedObjectContext = [ModelHandler getNewsFromVKWithSuccessBlock:blockToExecuteWhenResponseRecieved failureBlock:blockToExecuteWhenResponseFailed isRefreshing:self.isRefreshing requestOprationManager:self.requestOprationManager andManagedObjectContext:self.managedObjectContext];
 }
 
 - (void)loadNewPosts {
     SuccessLoadBlock blockToExecuteWhenResponseRecieved = ^(void){
         [self.activityIndicatorView stopAnimating];
+        self.isRefreshing = NO;
     };
     FailureLoadBlock blockToExecuteWhenResponseFailed = ^(void){
+        [self.activityIndicatorView stopAnimating];
+        self.isRefreshing = NO;
     };
     if (!self.isLoading && !self.isRefreshing) {
         self.activityIndicatorView.center = self.bottomView.center;
         [self.view addSubview:self.activityIndicatorView];
         [self.activityIndicatorView startAnimating];
         self.isLoading = YES;
-        [self getNewsFromVKWithSuccessBlock:blockToExecuteWhenResponseRecieved andFailureBlock:blockToExecuteWhenResponseFailed];
+        self.managedObjectContext = [ModelHandler getNewsFromVKWithSuccessBlock:blockToExecuteWhenResponseRecieved failureBlock:blockToExecuteWhenResponseFailed isRefreshing:self.isRefreshing requestOprationManager:self.requestOprationManager andManagedObjectContext:self.managedObjectContext];
     }
 }
 
@@ -239,12 +153,12 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     NewsCell *cell = [tableView dequeueReusableCellWithIdentifier:NEWS_CELL_IDENTIFIER forIndexPath:indexPath];
     
-    [self setUpNewsCell:cell forIndexPath:indexPath andResponseObject:(NSDictionary*)self.responseDictionary];
+    [self setUpNewsCell:cell forIndexPath:indexPath];
     
     return cell;
 }
 
-- (void)setUpNewsCell:(NewsCell*)cell forIndexPath:(NSIndexPath*)indexPath andResponseObject:(NSDictionary*)responseObject{
+- (void)setUpNewsCell:(NewsCell*)cell forIndexPath:(NSIndexPath*)indexPath{
     [self loadNewsFromCoreDataForCell:cell OnIndexPath:indexPath];
     }
 
@@ -256,7 +170,7 @@
     }
 }
 
--(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath{
     [self performSegueWithIdentifier:SHOW_DETAIL_IDENTIFIER sender:nil];
 }
 

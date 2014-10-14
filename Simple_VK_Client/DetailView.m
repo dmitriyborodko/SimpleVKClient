@@ -20,7 +20,7 @@
     if (self.detailItem.text) {
         self.isCellWithText = YES;
     }
-    self.dateFormat = [[NSDateFormatter alloc] init];
+    dateFormat = [[NSDateFormatter alloc] init];
     [self configureView];
     self.arrayWithImageURLs = [[NSMutableArray alloc] initWithArray:[NSKeyedUnarchiver unarchiveObjectWithData:self.detailItem.dataWithArrayOfImages]];
 }
@@ -36,10 +36,10 @@
     self.tableView.dataSource = self;
     
     //Date
-    [self.dateFormat setDateFormat:@"YYYY-MM-dd\'T\'HH:mm:ssZZZZZ"];
-    NSDate *formattedDate = [self.dateFormat dateFromString:[self.detailItem.date description]];
-    [self.dateFormat setDateFormat:@"HH:mm:ss dd/MM"];
-    [self.dateOfPost setText:[NSString stringWithFormat:@"%@",[self.dateFormat stringFromDate:formattedDate]]];
+    [dateFormat setDateFormat:@"YYYY-MM-dd\'T\'HH:mm:ssZZZZZ"];
+    NSDate *formattedDate = [dateFormat dateFromString:[self.detailItem.date description]];
+    [dateFormat setDateFormat:@"HH:mm:ss dd/MM"];
+    [self.dateOfPost setText:[NSString stringWithFormat:@"%@",[dateFormat stringFromDate:formattedDate]]];
     
     //Likes and Reposts
     [self.likesOfPost setText:self.detailItem.likes];
