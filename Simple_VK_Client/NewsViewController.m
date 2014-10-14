@@ -6,21 +6,21 @@
 //  Copyright (c) 2014 ALS. All rights reserved.
 //
 
-#import "NewsController.h"
+#import "NewsViewController.h"
 #import "NewsCell.h"
 #import "NewsItem.h"
 #import "ModelHandler.h"
 
-@interface NewsController ()
+@interface NewsViewController ()
 
 @end
 
-@implementation NewsController
+@implementation NewsViewController
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.requestOprationManager = [AFHTTPRequestOperationManager manager];
     self.navigationController.navigationItem.hidesBackButton = YES;
+    [ModelHandler initModelHandler];
     
     self.refreshControl = [[UIRefreshControl alloc] init];
     [self.refreshControl addTarget:self action:@selector(refreshInvoked:forState:) forControlEvents:UIControlEventValueChanged];
@@ -32,7 +32,7 @@
 }
 
 - (IBAction)exitButton:(id)sender{
-    [ModelHandler quitVKWithRequestOprationManager:self.requestOprationManager];
+    [ModelHandler quitVK];
     
     self.isRefreshing = YES;
     self.isLoading = YES;
@@ -122,7 +122,7 @@
     self.isRefreshing = YES;
     self.arrayOfIndexPathesOfCellsWithImages = [[NSMutableArray alloc] init];
     [NSFetchedResultsController deleteCacheWithName:@"cache"];
-    self.managedObjectContext = [ModelHandler getNewsFromVKWithSuccessBlock:blockToExecuteWhenResponseRecieved failureBlock:blockToExecuteWhenResponseFailed isRefreshing:self.isRefreshing requestOprationManager:self.requestOprationManager andManagedObjectContext:self.managedObjectContext];
+    self.managedObjectContext = [ModelHandler getNewsFromVKWithSuccessBlock:blockToExecuteWhenResponseRecieved failureBlock:blockToExecuteWhenResponseFailed isRefreshing:self.isRefreshing andManagedObjectContext:self.managedObjectContext];
 }
 
 - (void)loadNewPosts {
@@ -139,7 +139,7 @@
         [self.view addSubview:self.activityIndicatorView];
         [self.activityIndicatorView startAnimating];
         self.isLoading = YES;
-        self.managedObjectContext = [ModelHandler getNewsFromVKWithSuccessBlock:blockToExecuteWhenResponseRecieved failureBlock:blockToExecuteWhenResponseFailed isRefreshing:self.isRefreshing requestOprationManager:self.requestOprationManager andManagedObjectContext:self.managedObjectContext];
+        self.managedObjectContext = [ModelHandler getNewsFromVKWithSuccessBlock:blockToExecuteWhenResponseRecieved failureBlock:blockToExecuteWhenResponseFailed isRefreshing:self.isRefreshing andManagedObjectContext:self.managedObjectContext];
     }
 }
 

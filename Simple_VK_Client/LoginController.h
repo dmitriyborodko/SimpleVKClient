@@ -7,7 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "NewsController.h"
+#import "NewsViewController.h"
 #import <AFNetworking.h>
 #import <CoreData/CoreData.h>
 

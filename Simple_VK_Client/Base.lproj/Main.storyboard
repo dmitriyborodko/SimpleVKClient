@@ -89,10 +89,10 @@
             </objects>
             <point key="canvasLocation" x="721" y="838"/>
         </scene>
-        <!--News Controller-->
+        <!--News View Controller-->
         <scene sceneID="OUw-TO-j9D">
             <objects>
-                <tableViewController id="V3J-Z0-JYd" customClass="NewsController" sceneMemberID="viewController">
+                <tableViewController id="V3J-Z0-JYd" customClass="NewsViewController" sceneMemberID="viewController">
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="236" sectionHeaderHeight="22" sectionFooterHeight="22" id="x1m-ZQ-mR8">
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -361,7 +361,7 @@
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="3jC-ph-sae" id="xl4-VY-F9E">
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
-                                                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="g5z-4R-CnD">
+                                                <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="g5z-4R-CnD">
                                                     <rect key="frame" x="0.0" y="8" width="568" height="28"/>
                                                 </imageView>
                                             </subviews>

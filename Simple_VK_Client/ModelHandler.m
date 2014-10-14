@@ -11,7 +11,11 @@
 
 @implementation ModelHandler
 
-+ (NSManagedObjectContext*)getNewsFromVKWithSuccessBlock:(SuccessLoadBlock)successBlock failureBlock:(FailureLoadBlock)failureBlock isRefreshing:(BOOL)isRefreshing requestOprationManager:(AFHTTPRequestOperationManager*)requestOprationManager andManagedObjectContext:(NSManagedObjectContext*)managedObjectContext{
++ (void)initModelHandler{
+    requestOprationManager = [AFHTTPRequestOperationManager manager];
+}
+
++ (NSManagedObjectContext*)getNewsFromVKWithSuccessBlock:(SuccessLoadBlock)successBlock failureBlock:(FailureLoadBlock)failureBlock isRefreshing:(BOOL)isRefreshing andManagedObjectContext:(NSManagedObjectContext*)managedObjectContext{
     NSString *URLString = GET_NEWS_FEED_URL;
     NSMutableDictionary *parameters = [ModelHandler formNewsParametersWithRefreshing:isRefreshing andFromString:fromLoadString];
     
@@ -155,7 +159,7 @@
     return parameters;
 }
 
-+ (void)quitVKWithRequestOprationManager:(AFHTTPRequestOperationManager*)requestOprationManager{
++ (void)quitVK{
     [requestOprationManager GET:LOGUOT_URL parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
         NSLog(@"JSON: %@", responseObject);
     } failure:^(AFHTTPRequestOperation *operation, NSError *error) {

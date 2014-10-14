@@ -15,11 +15,10 @@
 
 static NSDateFormatter *dateFormat;
 
-@interface NewsController : UITableViewController <NSFetchedResultsControllerDelegate, UIScrollViewDelegate>
+@interface NewsViewController : UITableViewController <NSFetchedResultsControllerDelegate, UIScrollViewDelegate>
 
 @property (strong, nonatomic) NSManagedObjectContext *managedObjectContext;
 @property (strong, nonatomic) NSFetchedResultsController *fetchedResultsController;
-@property AFHTTPRequestOperationManager *requestOprationManager;
 @property NSMutableArray *arrayOfIndexPathesOfCellsWithImages;
 @property BOOL isRefreshing;
 @property BOOL isLoading;
