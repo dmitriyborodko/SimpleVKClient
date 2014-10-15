@@ -105,7 +105,6 @@
                                              [cell.imageInCell setImage:image];
                                          }
                                          failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
-                                             
                                          }];
         return cell;
     }

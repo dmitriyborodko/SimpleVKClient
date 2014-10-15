@@ -13,8 +13,6 @@
 
 @interface LoginController : UIViewController <UIWebViewDelegate>
 
-@property (strong, nonatomic) NSManagedObjectContext *managedObjectContext;
-
 - (IBAction)loginButton:(id)sender;
 
 @end

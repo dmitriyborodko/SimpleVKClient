@@ -10,21 +10,33 @@
 #import <UIKit/UIKit.h>
 #import <CoreData/CoreData.h>
 #import <AFNetworking/AFNetworking.h>
+#import "NewsViewController.h"
+
+#define FETCH_RESULT_CONTROLLER_CACHE_NAME @"cache"
+#define FETCH_RESULT_CONTROLLER_SORT_DESCRIPTOR @"date"
 
 typedef void (^ SuccessLoadBlock)(void);
 typedef void (^ FailureLoadBlock)(void);
 
 static AFHTTPRequestOperationManager *requestOprationManager;
 static NSString *fromLoadString;
+static NSFetchedResultsController *fetchedResultsController;
+static NSManagedObjectContext *managedObjectContext;
 
 @interface ModelHandler : NSObject
 
 + (void)initModelHandler;
-+ (NSManagedObjectContext*)saveResponseObject:(NSMutableDictionary*)responseObject andReturnManagedObjectContext:(NSManagedObjectContext*)managedObjectContext;
-+ (NSManagedObjectContext*)returnClearManagedObjectContext:(NSManagedObjectContext*)managedObjectContext;
++ (void)saveResponseObject:(NSMutableDictionary*)responseObject;
++ (void)returnClearManagedObjectContext;
 + (NSString*)fromFieldInResponse:(NSMutableDictionary*)responseObject;
 + (NSMutableDictionary*)formNewsParametersWithRefreshing:(BOOL)isRefreshing andFromString:(NSString*)fromLoadString;
-+ (NSManagedObjectContext*)getNewsFromVKWithSuccessBlock:(SuccessLoadBlock)successBlock failureBlock:(FailureLoadBlock)failureBlock isRefreshing:(BOOL)isRefreshing andManagedObjectContext:(NSManagedObjectContext*)managedObjectContext;
++ (void)getNewsFromVKWithSuccessBlock:(SuccessLoadBlock)successBlock failureBlock:(FailureLoadBlock)failureBlock isRefreshing:(BOOL)isRefreshing;
 + (void)quitVK;
++ (UIImageView*)setImageWithURLString:(NSString *)urlString successBlock:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, UIImage *image))successBlock failureBlock:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failureBlock toImageView:(UIImageView*)imageView;
++ (NSFetchedResultsController *)fetchedResultsController;
++ (void)initCoreDataWithManagedObjectContext:(NSManagedObjectContext*)resievedManagedObjectContext;
++ (NewsItem*)loadNewsItemOnIndexPath:(NSIndexPath*)indexPath;
++ (void)deleteFetchResultControllerCache;
+
 @end
 

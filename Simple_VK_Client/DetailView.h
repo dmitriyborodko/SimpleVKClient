@@ -10,6 +10,7 @@
 #import "NewsItem.h"
 #import "ImageCell.h"
 #import <AFNetworking/UIKit+AFNetworking.h>
+#import "ModelHandler.h"
 
 #define IMAGE_CELL_IDENTIFIER @"imageCell"
 #define TEXT_CELL_IDENTIFIER @"textCell"

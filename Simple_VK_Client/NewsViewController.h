@@ -7,7 +7,6 @@
 //
 
 #import <UIKit/UIKit.h>
-#import <AFNetworking/AFNetworking.h>
 #import <CoreData/CoreData.h>
 #import "DetailView.h"
 
@@ -17,16 +16,17 @@ static NSDateFormatter *dateFormat;
 
 @interface NewsViewController : UITableViewController <NSFetchedResultsControllerDelegate, UIScrollViewDelegate>
 
-@property (strong, nonatomic) NSManagedObjectContext *managedObjectContext;
-@property (strong, nonatomic) NSFetchedResultsController *fetchedResultsController;
 @property NSMutableArray *arrayOfIndexPathesOfCellsWithImages;
 @property BOOL isRefreshing;
 @property BOOL isLoading;
 @property NSString *fromLoadString;
 @property UIActivityIndicatorView *activityIndicatorView;
 
-- (IBAction)exitButton:(id)sender;
 @property (weak, nonatomic) IBOutlet UIView *bottomView;
+
+- (IBAction)exitButton:(id)sender;
+
++ (NewsViewController *) sharedInstance;
 
 @end
 

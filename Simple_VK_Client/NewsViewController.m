@@ -17,6 +17,27 @@
 
 @implementation NewsViewController
 
++ (NewsViewController *)sharedInstance
+{
+    static NewsViewController *sharedInstance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sharedInstance = [[NewsViewController alloc] init];
+        // Do any other initialisation stuff here
+    });
+    return sharedInstance;
+}
+
++ (id)allocWithZone:(NSZone *)zone
+{
+    static NewsViewController *sharedInstance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sharedInstance = [super allocWithZone:zone];
+    });
+    return sharedInstance;
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.navigationController.navigationItem.hidesBackButton = YES;
@@ -37,15 +58,15 @@
     self.isRefreshing = YES;
     self.isLoading = YES;
     self.arrayOfIndexPathesOfCellsWithImages = [[NSMutableArray alloc] init];
-    [NSFetchedResultsController deleteCacheWithName:@"cache"];
-    [ModelHandler returnClearManagedObjectContext:self.managedObjectContext];
+    [ModelHandler deleteFetchResultControllerCache];
+    [ModelHandler returnClearManagedObjectContext];
     [self.navigationController popToRootViewControllerAnimated:YES];
 }
 
 -(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender{
     if ([segue.identifier isEqualToString:SHOW_DETAIL_IDENTIFIER]) {
         NSIndexPath *indexPath = [self.tableView indexPathForSelectedRow];
-        NewsItem *detailItem = [self.fetchedResultsController objectAtIndexPath:indexPath];
+        NewsItem *detailItem = [[ModelHandler fetchedResultsController] objectAtIndexPath:indexPath];
         [[segue destinationViewController] setDetailItem:detailItem];
     }
 }
@@ -62,19 +83,20 @@
 #pragma mark - Data Managing
 
 - (void)loadNewsFromCoreDataForCell:(NewsCell*)cell OnIndexPath:(NSIndexPath*)indexPath{
-    NewsItem *newsItemFromCoreData = [self.fetchedResultsController objectAtIndexPath:indexPath];
+    NewsItem *newsItemFromCoreData = [ModelHandler loadNewsItemOnIndexPath:indexPath];
     
     //Name
     [cell.nameOfPostSender setText:newsItemFromCoreData.name];
     
     //Avatar
-    [cell.imageOfPostSender setImageWithURLRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:newsItemFromCoreData.imageAvatarURL]]
-                               placeholderImage:[UIImage imageNamed:PLACEHOLDER_IMAGE]
-                                        success:^(NSURLRequest *request, NSHTTPURLResponse *response, UIImage *image) {
-                                            [cell.imageOfPostSender setImage:image];
-                                        }
-                                        failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
-                                        }];
+    [ModelHandler setImageWithURLString:newsItemFromCoreData.imageAvatarURL
+                           successBlock:^(NSURLRequest *request, NSHTTPURLResponse *response, UIImage *image) {
+        [cell.imageOfPostSender setImage:image];
+    }
+                           failureBlock:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {
+    }
+                            toImageView:cell.imageOfPostSender];
+    
     CALayer * layer = [cell.imageOfPostSender layer];
     [layer setMasksToBounds:YES];
     [layer setCornerRadius:25.0];
@@ -93,12 +115,12 @@
     if (!(newsItemFromCoreData.imageURL == nil)) {
         cell.imageOfPostOne.hidden = NO;
         [self.arrayOfIndexPathesOfCellsWithImages addObject:indexPath];
-        [cell.imageOfPostOne setImageWithURLRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:newsItemFromCoreData.imageURL]]
-                                   placeholderImage:[UIImage imageNamed:PLACEHOLDER_IMAGE]
-                                            success:^(NSURLRequest *request, NSHTTPURLResponse *response, UIImage *image) {
-                                                [cell.imageOfPostOne setImage:image];
-                                            }
-                                            failure:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {                                            }];
+        [ModelHandler setImageWithURLString:newsItemFromCoreData.imageURL
+                               successBlock:^(NSURLRequest *request, NSHTTPURLResponse *response, UIImage *image) {
+            [cell.imageOfPostOne setImage:image];
+        }
+                               failureBlock:^(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error) {                                            }
+                                toImageView:cell.imageOfPostOne];
     }
     
     //Likes
@@ -121,8 +143,8 @@
     };
     self.isRefreshing = YES;
     self.arrayOfIndexPathesOfCellsWithImages = [[NSMutableArray alloc] init];
-    [NSFetchedResultsController deleteCacheWithName:@"cache"];
-    self.managedObjectContext = [ModelHandler getNewsFromVKWithSuccessBlock:blockToExecuteWhenResponseRecieved failureBlock:blockToExecuteWhenResponseFailed isRefreshing:self.isRefreshing andManagedObjectContext:self.managedObjectContext];
+    [ModelHandler deleteFetchResultControllerCache];
+    [ModelHandler getNewsFromVKWithSuccessBlock:blockToExecuteWhenResponseRecieved failureBlock:blockToExecuteWhenResponseFailed isRefreshing:self.isRefreshing];
 }
 
 - (void)loadNewPosts {
@@ -139,20 +161,19 @@
         [self.view addSubview:self.activityIndicatorView];
         [self.activityIndicatorView startAnimating];
         self.isLoading = YES;
-        self.managedObjectContext = [ModelHandler getNewsFromVKWithSuccessBlock:blockToExecuteWhenResponseRecieved failureBlock:blockToExecuteWhenResponseFailed isRefreshing:self.isRefreshing andManagedObjectContext:self.managedObjectContext];
+        [ModelHandler getNewsFromVKWithSuccessBlock:blockToExecuteWhenResponseRecieved failureBlock:blockToExecuteWhenResponseFailed isRefreshing:self.isRefreshing];
     }
 }
 
 #pragma mark - Table view
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    id <NSFetchedResultsSectionInfo> sectionInfo = [self.fetchedResultsController sections][section];
+    id <NSFetchedResultsSectionInfo> sectionInfo = [[ModelHandler fetchedResultsController] sections][section];
     return [sectionInfo numberOfObjects];
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     NewsCell *cell = [tableView dequeueReusableCellWithIdentifier:NEWS_CELL_IDENTIFIER forIndexPath:indexPath];
-    
     [self setUpNewsCell:cell forIndexPath:indexPath];
     
     return cell;
@@ -181,26 +202,26 @@
 
 #pragma mark - Fetched results controller
 
-- (NSFetchedResultsController *)fetchedResultsController{
-    if (_fetchedResultsController != nil) {
-        return _fetchedResultsController;
-    }
-    NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:ENTITY_NEWS_ITEM];
-    
-    NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"date" ascending:NO];
-    NSArray *sortDescriptors = @[sortDescriptor];
-    [fetchRequest setSortDescriptors:sortDescriptors];
-    
-    NSFetchedResultsController *aFetchedResultsController = [[NSFetchedResultsController alloc] initWithFetchRequest:fetchRequest managedObjectContext:self.managedObjectContext sectionNameKeyPath:nil cacheName:@"cache"];
-    aFetchedResultsController.delegate = self;
-    self.fetchedResultsController = aFetchedResultsController;
-    NSError *error = nil;
-    if (![self.fetchedResultsController performFetch:&error]) {
-        NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
-        abort();
-    }
-    return _fetchedResultsController;
-}
+//- (NSFetchedResultsController *)fetchedResultsController{
+//    if (_fetchedResultsController != nil) {
+//        return _fetchedResultsController;
+//    }
+//    NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:ENTITY_NEWS_ITEM];
+//    
+//    NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc] initWithKey:@"date" ascending:NO];
+//    NSArray *sortDescriptors = @[sortDescriptor];
+//    [fetchRequest setSortDescriptors:sortDescriptors];
+//    
+//    NSFetchedResultsController *aFetchedResultsController = [[NSFetchedResultsController alloc] initWithFetchRequest:fetchRequest managedObjectContext:self.managedObjectContext sectionNameKeyPath:nil cacheName:@"cache"];
+//    aFetchedResultsController.delegate = self;
+//    self.fetchedResultsController = aFetchedResultsController;
+//    NSError *error = nil;
+//    if (![self.fetchedResultsController performFetch:&error]) {
+//        NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
+//        abort();
+//    }
+//    return _fetchedResultsController;
+//}
 
 - (void)controllerWillChangeContent:(NSFetchedResultsController *)controller{
     [self.tableView beginUpdates];

@@ -21,7 +21,6 @@
 
 -(void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender{
     if ([segue.identifier isEqualToString:SHOW_NEWS_CONTROLLER_IDENTIFIER]) {
-        [[segue destinationViewController] setManagedObjectContext:self.managedObjectContext];
     }
 }
 

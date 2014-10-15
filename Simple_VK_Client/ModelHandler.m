@@ -8,6 +8,8 @@
 
 #import "ModelHandler.h"
 #import "NewsItem.h"
+#import <AFNetworking/UIKit+AFNetworking.h>
+
 
 @implementation ModelHandler
 
@@ -15,7 +17,33 @@
     requestOprationManager = [AFHTTPRequestOperationManager manager];
 }
 
-+ (NSManagedObjectContext*)getNewsFromVKWithSuccessBlock:(SuccessLoadBlock)successBlock failureBlock:(FailureLoadBlock)failureBlock isRefreshing:(BOOL)isRefreshing andManagedObjectContext:(NSManagedObjectContext*)managedObjectContext{
++ (void)initCoreDataWithManagedObjectContext:(NSManagedObjectContext*)resievedManagedObjectContext{
+    managedObjectContext = resievedManagedObjectContext;
+}
+
++ (NSFetchedResultsController *)fetchedResultsController{
+    if (fetchedResultsController != nil) {
+        return fetchedResultsController;
+    }
+    NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:ENTITY_NEWS_ITEM];
+    
+    NSSortDescriptor *sortDescriptor = [[NSSortDescriptor alloc] initWithKey:FETCH_RESULT_CONTROLLER_SORT_DESCRIPTOR ascending:NO];
+    NSArray *sortDescriptors = @[sortDescriptor];
+    [fetchRequest setSortDescriptors:sortDescriptors];
+    
+    NSFetchedResultsController *aFetchedResultsController = [[NSFetchedResultsController alloc] initWithFetchRequest:fetchRequest managedObjectContext:managedObjectContext sectionNameKeyPath:nil cacheName:FETCH_RESULT_CONTROLLER_CACHE_NAME];
+    NewsViewController *newsViewController = [NewsViewController sharedInstance];
+    aFetchedResultsController.delegate = newsViewController;
+    fetchedResultsController = aFetchedResultsController;
+    NSError *error = nil;
+    if (![self.fetchedResultsController performFetch:&error]) {
+        NSLog(@"Unresolved error %@, %@", error, [error userInfo]);
+        abort();
+    }
+    return fetchedResultsController;
+}
+
++ (void)getNewsFromVKWithSuccessBlock:(SuccessLoadBlock)successBlock failureBlock:(FailureLoadBlock)failureBlock isRefreshing:(BOOL)isRefreshing{
     NSString *URLString = GET_NEWS_FEED_URL;
     NSMutableDictionary *parameters = [ModelHandler formNewsParametersWithRefreshing:isRefreshing andFromString:fromLoadString];
     
@@ -25,9 +53,9 @@
         NSLog(@"request DONE");
         //        self.responseDictionary = responseObject;
         if (isRefreshing) {
-            [ModelHandler returnClearManagedObjectContext:managedObjectContext];
+            [ModelHandler returnClearManagedObjectContext];
         }
-        [ModelHandler saveResponseObject:responseObject andReturnManagedObjectContext:managedObjectContext];
+        [ModelHandler saveResponseObject:responseObject];
         [managedObjectContext save:nil];
         successBlock();
         
@@ -37,10 +65,9 @@
         UIAlertView *alertError = [[UIAlertView alloc] initWithTitle:@"Connection error" message:[error description] delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil, nil];
         [alertError show];
     }];
-    return managedObjectContext;
 }
 
-+ (NSManagedObjectContext*)saveResponseObject:(NSMutableDictionary*)responseObject andReturnManagedObjectContext:(NSManagedObjectContext*)managedObjectContext{
++ (void)saveResponseObject:(NSMutableDictionary*)responseObject{
     for (NSDictionary *itemDictionary in (NSArray*)[[responseObject objectForKey:@"response"] objectForKey:@"items"]) {
         NSString *postSenderID = [itemDictionary objectForKey:@"source_id"];
         NSLog(@"   check  %@ " , postSenderID);
@@ -122,12 +149,11 @@
         }
     }
     fromLoadString = [ModelHandler fromFieldInResponse:responseObject];
-    return managedObjectContext;
 }
 
 
 
-+ (NSManagedObjectContext*)returnClearManagedObjectContext:(NSManagedObjectContext*)managedObjectContext{
++ (void)returnClearManagedObjectContext{
     NSFetchRequest * newsFetchRequest = [[NSFetchRequest alloc] init];
     [newsFetchRequest setEntity:[NSEntityDescription entityForName:@"NewsItem" inManagedObjectContext:managedObjectContext]];
     [newsFetchRequest setIncludesPropertyValues:NO];
@@ -137,7 +163,6 @@
         [managedObjectContext deleteObject:newsItem];
     }
     [managedObjectContext save:nil];
-    return managedObjectContext;
 }
 
 + (NSString*)fromFieldInResponse:(NSMutableDictionary*)responseObject{
@@ -180,5 +205,19 @@
         }
     }
 }
+
++ (UIImageView*)setImageWithURLString:(NSString *)urlString successBlock:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, UIImage *image))successBlock failureBlock:(void (^)(NSURLRequest *request, NSHTTPURLResponse *response, NSError *error))failureBlock toImageView:(UIImageView*)imageView{
+    [imageView setImageWithURLRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:urlString]] placeholderImage:[UIImage imageNamed:PLACEHOLDER_IMAGE] success:successBlock failure:failureBlock];
+    return imageView;
+}
+
++ (NewsItem*)loadNewsItemOnIndexPath:(NSIndexPath*)indexPath{
+    return [self.fetchedResultsController objectAtIndexPath:indexPath];
+}
+
++ (void)deleteFetchResultControllerCache{
+    [NSFetchedResultsController deleteCacheWithName:FETCH_RESULT_CONTROLLER_CACHE_NAME];
+}
+
 
 @end
