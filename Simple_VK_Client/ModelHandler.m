@@ -67,7 +67,7 @@
     }];
 }
 
-+ (void)saveResponseObject:(NSMutableDictionary*)responseObject{
++ (void)saveResponseObject:(NSMutableDictionary*)responseObject {
     for (NSDictionary *itemDictionary in (NSArray*)[[responseObject objectForKey:@"response"] objectForKey:@"items"]) {
         NSString *postSenderID = [itemDictionary objectForKey:@"source_id"];
         NSLog(@"   check  %@ " , postSenderID);
